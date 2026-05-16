@@ -1,0 +1,16 @@
+services:
+  villa-management:
+    build: .
+    image: villa-management:latest
+    container_name: villa-management
+    restart: unless-stopped
+    ports:
+      - "3000:3000"          # change left side if you want a different host port
+    volumes:
+      - ./data:/app/data                       # SQLite database (persists across restarts)
+      - ./public/uploads:/app/public/uploads   # Logo uploads
+    environment:
+      DATABASE_URL: "file:/app/data/villa.db"
+      AUTH_SECRET: "${AUTH_SECRET}"
+      NEXTAUTH_URL: "${NEXTAUTH_URL}"
+      NODE_ENV: "production"
