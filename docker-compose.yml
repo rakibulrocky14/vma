@@ -1,16 +1,15 @@
 services:
   villa-management:
-    build: .
-    image: villa-management:latest
+    image: ghcr.io/rakibulrocky14/vma:latest
     container_name: villa-management
     restart: unless-stopped
     ports:
-      - "3000:3000"          # change left side if you want a different host port
+      - "3000:3000"
     volumes:
-      - ./data:/app/data                       # SQLite database (persists across restarts)
-      - ./public/uploads:/app/public/uploads   # Logo uploads
+      - ./data:/app/data
+      - ./public/uploads:/app/public/uploads
     environment:
       DATABASE_URL: "file:/app/data/villa.db"
-      AUTH_SECRET: "${AUTH_SECRET}"
-      NEXTAUTH_URL: "${NEXTAUTH_URL}"
+      AUTH_SECRET: "${AUTH_SECRET:-}"
+      NEXTAUTH_URL: "${NEXTAUTH_URL:-http://localhost:3000}"
       NODE_ENV: "production"
