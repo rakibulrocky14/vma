@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Dialog } from "@/components/ui/Dialog";
+import { PageSpinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
 import {
@@ -15,7 +17,6 @@ import {
   User2,
   Calendar,
   ChevronDown,
-  Loader2,
   TriangleAlert,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -26,11 +27,6 @@ type AppUser = {
   email: string;
   role: "ADMIN" | "MANAGER";
   createdAt: string;
-};
-
-const ROLE_LABELS: Record<AppUser["role"], string> = {
-  ADMIN: "Admin",
-  MANAGER: "Manager",
 };
 
 function RoleBadge({ role }: { role: AppUser["role"] }) {
@@ -44,13 +40,12 @@ function RoleBadge({ role }: { role: AppUser["role"] }) {
       )}
     >
       {role === "ADMIN" && <ShieldCheck className="h-3 w-3" />}
-      {ROLE_LABELS[role]}
+      {role === "ADMIN" ? "Admin" : "Manager"}
     </span>
   );
 }
 
 function UserAvatar({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
-  const initial = name.charAt(0).toUpperCase();
   return (
     <div
       className={cn(
@@ -58,7 +53,7 @@ function UserAvatar({ name, size = "md" }: { name: string; size?: "sm" | "md" })
         size === "md" ? "h-10 w-10 text-[15px]" : "h-8 w-8 text-[13px]"
       )}
     >
-      {initial}
+      {name.charAt(0).toUpperCase()}
     </div>
   );
 }
@@ -66,99 +61,84 @@ function UserAvatar({ name, size = "md" }: { name: string; size?: "sm" | "md" })
 const emptyForm = { name: "", email: "", password: "", role: "MANAGER" as AppUser["role"] };
 
 export default function UsersPage() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const { toast } = useToast();
-  const [users, setUsers] = useState<AppUser[]>([]);
-  const [fetching, setFetching] = useState(true);
+  const qc = useQueryClient();
+  const isAdmin = session?.user?.role === "ADMIN";
+  const currentUserId = session?.user?.id;
+
   const [showCreate, setShowCreate] = useState(false);
-  const [creating, setCreating] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [formError, setFormError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AppUser | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
-  const isAdmin = session?.user?.role === "ADMIN";
-  const currentUserId = session?.user?.id;
-
-  const fetchUsers = useCallback(async () => {
-    setFetching(true);
-    try {
+  // ── data fetching ──────────────────────────────────────
+  const { data: users = [], isLoading } = useQuery<AppUser[]>({
+    queryKey: ["users"],
+    queryFn: async () => {
       const res = await fetch("/api/users");
       if (!res.ok) throw new Error("Failed to load");
-      setUsers(await res.json());
-    } catch {
-      toast("Failed to load users", "error");
-    } finally {
-      setFetching(false);
-    }
-  }, [toast]);
+      return res.json();
+    },
+    enabled: isAdmin === true,
+  });
 
-  useEffect(() => {
-    if (isAdmin) fetchUsers();
-  }, [isAdmin, fetchUsers]);
+  // ── mutations ──────────────────────────────────────────
+  const createMutation = useMutation({
+    mutationFn: async (payload: typeof form) => {
+      const res = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(
+        data.error?.fieldErrors
+          ? Object.values(data.error.fieldErrors).flat().join(", ")
+          : (data.error ?? "Failed to create user")
+      );
+      return data as AppUser;
+    },
+    onSuccess: (user) => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+      setShowCreate(false);
+      setForm(emptyForm);
+      setShowPassword(false);
+      toast(`${user.name} has been added`, "success");
+    },
+    onError: (e: Error) => setFormError(e.message),
+  });
 
-  async function handleCreate(e: React.FormEvent) {
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? "Failed to delete");
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+      toast(`${deleteTarget?.name} has been removed`, "success");
+      setDeleteTarget(null);
+    },
+    onError: (e: Error) => toast(e.message, "error"),
+  });
+
+  function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setFormError("");
     if (!form.name.trim()) return setFormError("Name is required");
     if (!form.email.trim()) return setFormError("Email is required");
     if (form.password.length < 6) return setFormError("Password must be at least 6 characters");
-
-    setCreating(true);
-    try {
-      const res = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setFormError(data.error?.fieldErrors ? Object.values(data.error.fieldErrors).flat().join(", ") : (data.error ?? "Failed to create user"));
-        return;
-      }
-      setUsers((prev) => [...prev, data]);
-      setShowCreate(false);
-      setForm(emptyForm);
-      setShowPassword(false);
-      toast(`${data.name} has been added`, "success");
-    } catch {
-      setFormError("Something went wrong. Try again.");
-    } finally {
-      setCreating(false);
-    }
+    createMutation.mutate(form);
   }
 
-  async function handleDelete() {
-    if (!deleteTarget) return;
-    setDeleting(true);
-    try {
-      const res = await fetch(`/api/users/${deleteTarget.id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const data = await res.json();
-        toast(data.error ?? "Failed to delete", "error");
-        return;
-      }
-      setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
-      toast(`${deleteTarget.name} has been removed`, "success");
-      setDeleteTarget(null);
-    } catch {
-      toast("Something went wrong", "error");
-    } finally {
-      setDeleting(false);
-    }
-  }
-
-  /* ── loading / access guard ───────────────────────────── */
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-      </div>
-    );
-  }
-
+  // ── access guard ───────────────────────────────────────
   if (!isAdmin) {
+    // session may still be hydrating — only show denied if we're sure
+    if (session === undefined) return <PageSpinner />;
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
@@ -173,6 +153,8 @@ export default function UsersPage() {
       </div>
     );
   }
+
+  if (isLoading) return <PageSpinner />;
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-4xl mx-auto">
@@ -190,7 +172,12 @@ export default function UsersPage() {
           </p>
         </div>
         <Button
-          onClick={() => { setShowCreate(true); setForm(emptyForm); setFormError(""); setShowPassword(false); }}
+          onClick={() => {
+            setShowCreate(true);
+            setForm(emptyForm);
+            setFormError("");
+            setShowPassword(false);
+          }}
           size="md"
           className="shrink-0"
         >
@@ -201,11 +188,7 @@ export default function UsersPage() {
       </div>
 
       {/* Users list */}
-      {fetching ? (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
-        </div>
-      ) : users.length === 0 ? (
+      {users.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
             <User2 className="h-6 w-6 text-slate-400" />
@@ -218,7 +201,7 @@ export default function UsersPage() {
         </div>
       ) : (
         <>
-          {/* ── desktop table ── */}
+          {/* desktop table */}
           <div className="hidden sm:block bg-white rounded-xl shadow-card border border-slate-200/80 overflow-hidden">
             <table className="w-full text-[13.5px]">
               <thead>
@@ -246,9 +229,7 @@ export default function UsersPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="py-3.5 px-5">
-                      <RoleBadge role={user.role} />
-                    </td>
+                    <td className="py-3.5 px-5"><RoleBadge role={user.role} /></td>
                     <td className="py-3.5 px-5 text-slate-500">
                       {format(new Date(user.createdAt), "d MMM yyyy")}
                     </td>
@@ -269,11 +250,13 @@ export default function UsersPage() {
               </tbody>
             </table>
             <div className="px-5 py-2.5 border-t border-slate-100 bg-slate-50/40">
-              <p className="text-[12px] text-slate-400">{users.length} {users.length === 1 ? "user" : "users"} total</p>
+              <p className="text-[12px] text-slate-400">
+                {users.length} {users.length === 1 ? "user" : "users"} total
+              </p>
             </div>
           </div>
 
-          {/* ── mobile cards ── */}
+          {/* mobile cards */}
           <div className="sm:hidden flex flex-col gap-3">
             {users.map((user) => (
               <div
@@ -283,9 +266,7 @@ export default function UsersPage() {
                 <UserAvatar name={user.name} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-semibold text-[14px] text-slate-900 truncate">
-                      {user.name}
-                    </p>
+                    <p className="font-semibold text-[14px] text-slate-900 truncate">{user.name}</p>
                     {user.id === currentUserId && (
                       <span className="text-[11px] text-slate-400">(you)</span>
                     )}
@@ -304,7 +285,7 @@ export default function UsersPage() {
                     aria-label={`Delete ${user.name}`}
                     className="shrink-0 flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 active:bg-red-100 transition-colors cursor-pointer"
                   >
-                    <Trash2 className="h-4.5 w-4.5" />
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 )}
               </div>
@@ -314,11 +295,7 @@ export default function UsersPage() {
       )}
 
       {/* ── Add User dialog ── */}
-      <Dialog
-        open={showCreate}
-        onClose={() => setShowCreate(false)}
-        title="Add New User"
-      >
+      <Dialog open={showCreate} onClose={() => setShowCreate(false)} title="Add New User">
         <form onSubmit={handleCreate} className="flex flex-col gap-4">
           <Input
             id="u-name"
@@ -366,7 +343,6 @@ export default function UsersPage() {
             </div>
           </div>
 
-          {/* Role selector */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[12px] font-semibold tracking-wide uppercase text-slate-600">
               Role
@@ -394,7 +370,7 @@ export default function UsersPage() {
             <Button type="button" variant="secondary" onClick={() => setShowCreate(false)} className="flex-1">
               Cancel
             </Button>
-            <Button type="submit" loading={creating} className="flex-1">
+            <Button type="submit" loading={createMutation.isPending} className="flex-1">
               <UserCog className="h-4 w-4" />
               Create User
             </Button>
@@ -403,11 +379,7 @@ export default function UsersPage() {
       </Dialog>
 
       {/* ── Delete confirmation dialog ── */}
-      <Dialog
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        title="Remove User"
-      >
+      <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Remove User">
         <div className="flex flex-col gap-5">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50">
@@ -418,25 +390,20 @@ export default function UsersPage() {
                 Remove {deleteTarget?.name}?
               </p>
               <p className="text-[13px] text-slate-500 mt-1 leading-relaxed">
-                This will permanently delete their account. They won&apos;t be able to log
-                in. This action cannot be undone.
+                This will permanently delete their account. They won&apos;t be able to log in.
+                This action cannot be undone.
               </p>
             </div>
           </div>
           <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setDeleteTarget(null)}
-              className="flex-1"
-            >
+            <Button type="button" variant="secondary" onClick={() => setDeleteTarget(null)} className="flex-1">
               Cancel
             </Button>
             <Button
               type="button"
               variant="danger"
-              loading={deleting}
-              onClick={handleDelete}
+              loading={deleteMutation.isPending}
+              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
               className="flex-1"
             >
               <Trash2 className="h-4 w-4" />

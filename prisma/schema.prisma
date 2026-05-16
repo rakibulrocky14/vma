@@ -18,15 +18,16 @@ enum BookStatus {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  name         String
-  email        String        @unique
-  passwordHash String
-  role         Role          @default(MANAGER)
-  villas       Villa[]
-  shareholders Shareholder[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id            String         @id @default(cuid())
+  name          String
+  email         String         @unique
+  passwordHash  String
+  role          Role           @default(MANAGER)
+  villas        Villa[]
+  shareholders  Shareholder[]
+  incomeSources IncomeSource[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Villa {
@@ -34,6 +35,7 @@ model Villa {
   villaNumber  String
   address      String
   totalRooms   Int
+  ownerShare   Decimal?           // manager's own % share (informational)
   ownerId      String
   owner        User               @relation(fields: [ownerId], references: [id])
   rooms        Room[]
@@ -54,15 +56,16 @@ model Room {
 }
 
 model Shareholder {
-  id          String             @id @default(cuid())
-  name        String
-  phone       String?
-  email       String?
-  createdById String?
-  createdBy   User?              @relation(fields: [createdById], references: [id])
-  villas      VillaShareholder[]
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  id                 String                   @id @default(cuid())
+  name               String
+  phone              String?
+  email              String?
+  createdById        String?
+  createdBy          User?                    @relation(fields: [createdById], references: [id])
+  villas             VillaShareholder[]
+  incomeSourceShares IncomeSourceEntryShare[]
+  createdAt          DateTime                 @default(now())
+  updatedAt          DateTime                 @updatedAt
 }
 
 model VillaShareholder {
@@ -120,4 +123,41 @@ model Settings {
   logoUrl     String?
   address     String?
   updatedAt   DateTime @updatedAt
+}
+
+// ─── Income Sources ──────────────────────────────────────────────────────────
+
+model IncomeSource {
+  id          String              @id @default(cuid())
+  name        String              // person's name
+  phone       String?
+  notes       String?
+  createdById String
+  createdBy   User                @relation(fields: [createdById], references: [id])
+  entries     IncomeSourceEntry[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+}
+
+model IncomeSourceEntry {
+  id             String                   @id @default(cuid())
+  incomeSourceId String
+  incomeSource   IncomeSource             @relation(fields: [incomeSourceId], references: [id], onDelete: Cascade)
+  propertyName   String                   // free-text villa/property name
+  mySharePercent Decimal                  // user's % share (informational)
+  shares         IncomeSourceEntryShare[]
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+}
+
+model IncomeSourceEntryShare {
+  id            String            @id @default(cuid())
+  entryId       String
+  entry         IncomeSourceEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  shareholderId String
+  shareholder   Shareholder       @relation(fields: [shareholderId], references: [id])
+  sharePercent  Decimal           // % of user's share that goes to this shareholder
+  createdAt     DateTime          @default(now())
+
+  @@unique([entryId, shareholderId])
 }

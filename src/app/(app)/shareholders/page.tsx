@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { PageSpinner } from "@/components/ui/Spinner";
 import { Users, Plus, Phone, Mail, Building2, Trash2, ArrowRight, Search } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { useState } from "react";
@@ -46,8 +45,6 @@ export default function ShareholdersPage() {
     onError: (e: Error) => toast(e.message, "error"),
   });
 
-  if (isLoading) return <PageSpinner />;
-
   const list = shareholders ?? [];
   const filtered = query
     ? list.filter(
@@ -73,8 +70,14 @@ export default function ShareholdersPage() {
               Shareholders
             </h1>
             <p className="text-[13px] sm:text-[14px] text-slate-600 mt-2 sm:mt-3">
-              <span className="font-semibold text-slate-900">{list.length}</span>{" "}
-              {list.length === 1 ? "person" : "people"} in your directory
+              {isLoading ? (
+                <span className="inline-block h-3.5 w-32 rounded bg-slate-200 animate-pulse align-middle" />
+              ) : (
+                <>
+                  <span className="font-semibold text-slate-900">{list.length}</span>{" "}
+                  {list.length === 1 ? "person" : "people"} in your directory
+                </>
+              )}
             </p>
           </div>
           <Link href="/shareholders/new" className="shrink-0">
@@ -87,7 +90,7 @@ export default function ShareholdersPage() {
         </div>
 
         {/* Search */}
-        {list.length > 0 && (
+        {(isLoading || list.length > 0) && (
           <div className="relative mb-4 sm:mb-5">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
             <input
@@ -95,12 +98,32 @@ export default function ShareholdersPage() {
               placeholder="Search by name, email, or phone..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full h-11 sm:h-10 pl-9 pr-3 rounded-lg border border-slate-200 bg-white text-[14px] sm:text-[13px] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-600/40 focus:border-amber-600"
+              disabled={isLoading}
+              className="w-full h-11 sm:h-10 pl-9 pr-3 rounded-lg border border-slate-200 bg-white text-[14px] sm:text-[13px] placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-600/40 focus:border-amber-600 disabled:opacity-50"
             />
           </div>
         )}
 
-        {list.length === 0 && (
+        {/* Skeleton rows while loading */}
+        {isLoading && (
+          <div className="flex flex-col gap-2 sm:gap-2.5">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="rounded-xl bg-white border border-slate-200/80 shadow-card px-4 sm:px-5 py-3.5 sm:py-4 flex items-center gap-3"
+              >
+                <div className="h-11 w-11 sm:h-10 sm:w-10 shrink-0 rounded-full bg-slate-200 animate-pulse" />
+                <div className="flex-1 min-w-0 space-y-2">
+                  <div className="h-3.5 w-2/5 rounded bg-slate-200 animate-pulse" />
+                  <div className="h-2.5 w-1/4 rounded bg-slate-100 animate-pulse" />
+                </div>
+                <div className="h-5 w-14 rounded-full bg-slate-200 animate-pulse" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!isLoading && list.length === 0 && (
           <div className="text-center py-16 sm:py-24 rounded-xl border border-dashed border-slate-300 bg-white px-4">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100">
               <Users className="h-7 w-7 text-amber-700" />
@@ -118,13 +141,13 @@ export default function ShareholdersPage() {
           </div>
         )}
 
-        {filtered.length === 0 && list.length > 0 && (
+        {!isLoading && filtered.length === 0 && list.length > 0 && (
           <div className="text-center py-12 rounded-xl border border-slate-200 bg-white">
             <p className="text-[13px] text-slate-500">No matches for &ldquo;{query}&rdquo;</p>
           </div>
         )}
 
-        <div className="flex flex-col gap-2 sm:gap-2.5">
+        {!isLoading && <div className="flex flex-col gap-2 sm:gap-2.5">
           {filtered.map((s) => (
             <article
               key={s.id}
@@ -199,7 +222,7 @@ export default function ShareholdersPage() {
               </div>
             </article>
           ))}
-        </div>
+        </div>}
       </div>
     </div>
   );

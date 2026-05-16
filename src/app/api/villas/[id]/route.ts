@@ -35,6 +35,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 const UpdateVillaSchema = z.object({
   villaNumber: z.string().min(1).optional(),
   address: z.string().min(1).optional(),
+  ownerShare: z.number().min(0).max(100).nullable().optional(),
 });
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {

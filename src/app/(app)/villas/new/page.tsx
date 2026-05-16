@@ -24,7 +24,7 @@ export default function NewVillaPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ villaNumber: "", address: "", totalRooms: "" });
+  const [form, setForm] = useState({ villaNumber: "", address: "", totalRooms: "", ownerShare: "" });
   const [shareholders, setShareholders] = useState<ShareholderRow[]>([
     { shareholderId: "", percentage: "" },
   ]);
@@ -65,6 +65,7 @@ export default function NewVillaPage() {
         villaNumber: form.villaNumber,
         address: form.address,
         totalRooms: parseInt(form.totalRooms),
+        ownerShare: form.ownerShare ? parseFloat(form.ownerShare) : undefined,
         shareholders: shareholders
           .filter((s) => s.shareholderId && s.percentage)
           .map((s) => ({
@@ -154,6 +155,19 @@ export default function NewVillaPage() {
                 value={form.address}
                 onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
                 required
+              />
+              <Input
+                id="ownerShare"
+                label="My share % (optional)"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                max={100}
+                step={0.01}
+                placeholder="e.g. 25"
+                value={form.ownerShare}
+                onChange={(e) => setForm((p) => ({ ...p, ownerShare: e.target.value }))}
+                hint="Your personal ownership stake in this villa's profit."
               />
             </div>
           </section>

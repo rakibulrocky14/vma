@@ -10,6 +10,8 @@ import {
   LogOut,
   X,
   UserCog,
+  TrendingUp,
+  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,6 +20,8 @@ import { signOut, useSession } from "next-auth/react";
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/shareholders", icon: Users, label: "Shareholders" },
+  { href: "/income-sources", icon: TrendingUp, label: "Income Sources" },
+  { href: "/holdings", icon: Wallet, label: "My Holdings" },
   { href: "/reports", icon: BarChart3, label: "Reports" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ];
@@ -34,6 +38,7 @@ export function Sidebar({ onClose, mobileMode = false }: SidebarProps) {
   function isActive(href: string) {
     if (href === "/dashboard")
       return pathname === "/dashboard" || pathname.startsWith("/villas");
+    if (href === "/holdings") return pathname === "/holdings";
     return pathname.startsWith(href);
   }
 

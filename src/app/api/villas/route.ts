@@ -8,6 +8,7 @@ const CreateVillaSchema = z.object({
   villaNumber: z.string().min(1).max(50).trim(),
   address: z.string().min(1).max(300).trim(),
   totalRooms: z.number().int().min(1).max(200),
+  ownerShare: z.number().min(0).max(100).optional(),
   shareholders: z
     .array(
       z.object({
@@ -61,7 +62,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { villaNumber, address, totalRooms, shareholders } = parsed.data;
+  const { villaNumber, address, totalRooms, ownerShare, shareholders } = parsed.data;
 
   // Validate sum to 100%
   const totalPct = shareholders.reduce((sum, s) => sum + s.percentage, 0);
@@ -98,6 +99,7 @@ export async function POST(req: Request) {
       villaNumber,
       address,
       totalRooms,
+      ownerShare: ownerShare ?? null,
       ownerId: session.user.id,
       rooms: {
         create: Array.from({ length: totalRooms }, (_, i) => ({ roomNumber: `R${i + 1}` })),
