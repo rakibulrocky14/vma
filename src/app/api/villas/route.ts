@@ -8,7 +8,7 @@ const CreateVillaSchema = z.object({
   villaNumber: z.string().min(1).max(50).trim(),
   address: z.string().min(1).max(300).trim(),
   totalRooms: z.number().int().min(1).max(200),
-  ownerShare: z.number().min(0).max(100).optional(),
+  ownerShare: z.number().min(0.01).max(100).optional(),
   shareholders: z
     .array(
       z.object({
@@ -16,8 +16,8 @@ const CreateVillaSchema = z.object({
         percentage: z.number().min(0.01).max(100),
       })
     )
-    .min(1)
-    .max(50),
+    .max(50)
+    .default([]),
 });
 
 export async function GET() {
@@ -64,34 +64,59 @@ export async function POST(req: Request) {
 
   const { villaNumber, address, totalRooms, ownerShare, shareholders } = parsed.data;
 
-  // Validate sum to 100%
-  const totalPct = shareholders.reduce((sum, s) => sum + s.percentage, 0);
+  // Build the final shareholders list — start with the submitted ones
+  const allShareholders = [...shareholders];
+
+  // If the manager set their own share, find-or-create their Shareholder record
+  if (ownerShare && ownerShare > 0) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { name: true },
+    });
+
+    let ownerShareholder = await prisma.shareholder.findUnique({
+      where: { userId: session.user.id },
+    });
+
+    if (!ownerShareholder) {
+      ownerShareholder = await prisma.shareholder.create({
+        data: {
+          name: user!.name,
+          userId: session.user.id,
+          createdById: session.user.id,
+        },
+      });
+    }
+
+    allShareholders.push({ shareholderId: ownerShareholder.id, percentage: ownerShare });
+  }
+
+  if (allShareholders.length === 0) {
+    return NextResponse.json({ error: "Add at least one shareholder or set your own share." }, { status: 400 });
+  }
+
+  // Validate total = 100%
+  const totalPct = allShareholders.reduce((sum, s) => sum + s.percentage, 0);
   if (Math.abs(totalPct - 100) > 0.01) {
     return NextResponse.json(
-      { error: `Shareholder percentages must total 100%. Currently ${totalPct.toFixed(2)}%.` },
+      { error: `Shares must total 100%. Currently ${totalPct.toFixed(2)}%.` },
       { status: 400 }
     );
   }
 
-  // No duplicates
-  const uniqueIds = new Set(shareholders.map((s) => s.shareholderId));
-  if (uniqueIds.size !== shareholders.length) {
-    return NextResponse.json(
-      { error: "A shareholder appears more than once" },
-      { status: 400 }
-    );
+  // No duplicate shareholders
+  const uniqueIds = new Set(allShareholders.map((s) => s.shareholderId));
+  if (uniqueIds.size !== allShareholders.length) {
+    return NextResponse.json({ error: "A shareholder appears more than once" }, { status: 400 });
   }
 
   // All shareholderIds must exist
   const existing = await prisma.shareholder.findMany({
-    where: { id: { in: shareholders.map((s) => s.shareholderId) } },
+    where: { id: { in: allShareholders.map((s) => s.shareholderId) } },
     select: { id: true },
   });
-  if (existing.length !== shareholders.length) {
-    return NextResponse.json(
-      { error: "One or more shareholders do not exist" },
-      { status: 400 }
-    );
+  if (existing.length !== allShareholders.length) {
+    return NextResponse.json({ error: "One or more shareholders do not exist" }, { status: 400 });
   }
 
   const villa = await prisma.villa.create({
@@ -105,7 +130,7 @@ export async function POST(req: Request) {
         create: Array.from({ length: totalRooms }, (_, i) => ({ roomNumber: `R${i + 1}` })),
       },
       shareholders: {
-        create: shareholders.map((s) => ({
+        create: allShareholders.map((s) => ({
           shareholderId: s.shareholderId,
           percentage: s.percentage,
         })),

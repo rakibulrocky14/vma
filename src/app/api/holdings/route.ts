@@ -24,13 +24,18 @@ export async function GET(req: Request) {
     orderBy: { villaNumber: "asc" },
   });
 
+  // Find the user's linked shareholder record (if any)
+  const myShareholderRecord = await prisma.shareholder.findUnique({
+    where: { userId: session.user.id },
+    select: { id: true },
+  });
+
   const villaHoldings = villas.map((v) => {
     const rooms = v.rooms.map((r) => ({
       rentAmount: r.records[0]?.rentAmount ?? 0,
       paidAmount: r.records[0]?.paidAmount ?? 0,
     }));
     const expenses = v.expenses.map((e) => ({ amount: e.amount }));
-    const ownerShare = parseDecimal(v.ownerShare);
 
     const summary = computeProfit(rooms, expenses, v.shareholders.map((vs) => ({
       id: vs.shareholder.id,
@@ -38,7 +43,16 @@ export async function GET(req: Request) {
       percentage: parseDecimal(vs.percentage),
     })));
 
-    const myAmount = ownerShare > 0 ? (summary.netProfit * ownerShare) / 100 : 0;
+    // Prefer the real VillaShareholder entry linked to this user
+    const myVSSplit = myShareholderRecord
+      ? summary.shareholderSplits.find((s) => s.id === myShareholderRecord.id)
+      : null;
+    const ownerShare = myVSSplit
+      ? myVSSplit.percentage
+      : parseDecimal(v.ownerShare);
+    const myAmount = myVSSplit
+      ? myVSSplit.amount
+      : ownerShare > 0 ? (summary.netProfit * ownerShare) / 100 : 0;
 
     return {
       villaId: v.id,

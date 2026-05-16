@@ -19,16 +19,17 @@ enum BookStatus {
 }
 
 model User {
-  id            String         @id @default(cuid())
-  name          String
-  email         String         @unique
-  passwordHash  String
-  role          Role           @default(MANAGER)
-  villas        Villa[]
-  shareholders  Shareholder[]
-  incomeSources IncomeSource[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  id                String         @id @default(cuid())
+  name              String
+  email             String         @unique
+  passwordHash      String
+  role              Role           @default(MANAGER)
+  villas            Villa[]
+  shareholders      Shareholder[]
+  incomeSources     IncomeSource[]
+  linkedShareholder Shareholder?   @relation("UserShareholder")
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 }
 
 model Villa {
@@ -61,6 +62,8 @@ model Shareholder {
   name               String
   phone              String?
   email              String?
+  userId             String?                  @unique // links to a User account (for manager's own share)
+  linkedUser         User?                    @relation("UserShareholder", fields: [userId], references: [id])
   createdById        String?
   createdBy          User?                    @relation(fields: [createdById], references: [id])
   villas             VillaShareholder[]

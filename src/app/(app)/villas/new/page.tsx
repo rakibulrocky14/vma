@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
@@ -23,11 +24,11 @@ interface ShareholderOption {
 export default function NewVillaPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ villaNumber: "", address: "", totalRooms: "", ownerShare: "" });
-  const [shareholders, setShareholders] = useState<ShareholderRow[]>([
-    { shareholderId: "", percentage: "" },
-  ]);
+  const [form, setForm] = useState({ villaNumber: "", address: "", totalRooms: "" });
+  const [myShare, setMyShare] = useState("");
+  const [shareholders, setShareholders] = useState<ShareholderRow[]>([]);
 
   const { data: allShareholders } = useQuery<ShareholderOption[]>({
     queryKey: ["shareholders"],
@@ -37,7 +38,9 @@ export default function NewVillaPage() {
     },
   });
 
-  const totalPct = shareholders.reduce((sum, s) => sum + (parseFloat(s.percentage) || 0), 0);
+  const myShareNum = parseFloat(myShare) || 0;
+  const totalPct =
+    myShareNum + shareholders.reduce((sum, s) => sum + (parseFloat(s.percentage) || 0), 0);
   const pctOk = Math.abs(totalPct - 100) < 0.01;
   const pctDiff = 100 - totalPct;
 
@@ -65,7 +68,7 @@ export default function NewVillaPage() {
         villaNumber: form.villaNumber,
         address: form.address,
         totalRooms: parseInt(form.totalRooms),
-        ownerShare: form.ownerShare ? parseFloat(form.ownerShare) : undefined,
+        ownerShare: myShareNum > 0 ? myShareNum : undefined,
         shareholders: shareholders
           .filter((s) => s.shareholderId && s.percentage)
           .map((s) => ({
@@ -89,6 +92,7 @@ export default function NewVillaPage() {
 
   const usedIds = shareholders.map((s) => s.shareholderId).filter(Boolean);
   const noShareholders = allShareholders?.length === 0;
+  const managerName = session?.user?.name ?? "You";
 
   return (
     <div className="min-h-full bg-[#faf7f1]">
@@ -156,19 +160,6 @@ export default function NewVillaPage() {
                 onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
                 required
               />
-              <Input
-                id="ownerShare"
-                label="My share % (optional)"
-                type="number"
-                inputMode="decimal"
-                min={0}
-                max={100}
-                step={0.01}
-                placeholder="e.g. 25"
-                value={form.ownerShare}
-                onChange={(e) => setForm((p) => ({ ...p, ownerShare: e.target.value }))}
-                hint="Your personal ownership stake in this villa's profit."
-              />
             </div>
           </section>
 
@@ -182,12 +173,13 @@ export default function NewVillaPage() {
                 </h2>
               </div>
               <Badge variant={pctOk ? "success" : "warning"}>
-                {totalPct.toFixed(2)}% {pctOk ? "✓" : `(${pctDiff > 0 ? "+" : ""}${pctDiff.toFixed(2)} to go)`}
+                {totalPct.toFixed(2)}%{" "}
+                {pctOk ? "✓" : `(${pctDiff > 0 ? "+" : ""}${pctDiff.toFixed(2)} to go)`}
               </Badge>
             </div>
 
             <div className="px-5 sm:px-6 py-5 flex flex-col gap-4">
-              {noShareholders && (
+              {noShareholders && myShareNum === 0 && (
                 <div className="flex items-start gap-2.5 rounded-md bg-amber-50 border border-amber-200 p-3 text-[13px] text-amber-900">
                   <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                   <span>
@@ -195,11 +187,45 @@ export default function NewVillaPage() {
                     <Link href="/shareholders/new" className="underline font-semibold">
                       Add one first
                     </Link>
-                    , then come back here.
+                    , or enter your own share below.
                   </span>
                 </div>
               )}
 
+              {/* My own share row — always shown at the top */}
+              <div className="rounded-lg border border-amber-200 bg-amber-50/40 p-3 sm:p-0 sm:bg-transparent sm:border-0">
+                <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+                  <div className="flex-1 min-w-0">
+                    <label className="text-[12px] font-semibold tracking-wide uppercase text-slate-600 block mb-1.5">
+                      My share (you)
+                    </label>
+                    <div className="h-11 sm:h-10 w-full rounded-lg border border-amber-300 bg-amber-50 px-3 flex items-center gap-2">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-600 text-white text-[11px] font-bold">
+                        {managerName.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="text-[14px] sm:text-[13.5px] font-semibold text-amber-900 truncate">
+                        {managerName}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-full sm:w-32">
+                    <Input
+                      label="Share %"
+                      type="number"
+                      inputMode="decimal"
+                      min={0.01}
+                      max={100}
+                      step={0.01}
+                      placeholder="0"
+                      value={myShare}
+                      onChange={(e) => setMyShare(e.target.value)}
+                      hint="Leave blank if you have no stake"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Other shareholders */}
               {shareholders.map((row, i) => (
                 <div key={i} className="rounded-lg border border-slate-100 bg-slate-50/40 p-3 sm:p-0 sm:bg-transparent sm:border-0">
                   <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
@@ -240,17 +266,15 @@ export default function NewVillaPage() {
                           required
                         />
                       </div>
-                      {shareholders.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeRow(i)}
-                          className="mb-0.5 flex h-11 w-11 sm:h-10 sm:w-10 shrink-0 items-center justify-center text-slate-500 hover:text-red-700 hover:bg-red-50 active:bg-red-100 rounded-lg transition-colors cursor-pointer"
-                          title="Remove"
-                          aria-label="Remove shareholder"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeRow(i)}
+                        className="mb-0.5 flex h-11 w-11 sm:h-10 sm:w-10 shrink-0 items-center justify-center text-slate-500 hover:text-red-700 hover:bg-red-50 active:bg-red-100 rounded-lg transition-colors cursor-pointer"
+                        title="Remove"
+                        aria-label="Remove shareholder"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
