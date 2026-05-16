@@ -18,14 +18,15 @@ enum BookStatus {
 }
 
 model User {
-  id           String   @id @default(cuid())
+  id           String        @id @default(cuid())
   name         String
-  email        String   @unique
+  email        String        @unique
   passwordHash String
-  role         Role     @default(MANAGER)
+  role         Role          @default(MANAGER)
   villas       Villa[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  shareholders Shareholder[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 }
 
 model Villa {
@@ -53,13 +54,15 @@ model Room {
 }
 
 model Shareholder {
-  id        String             @id @default(cuid())
-  name      String
-  phone     String?
-  email     String?
-  villas    VillaShareholder[]
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  id          String             @id @default(cuid())
+  name        String
+  phone       String?
+  email       String?
+  createdById String?
+  createdBy   User?              @relation(fields: [createdById], references: [id])
+  villas      VillaShareholder[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 }
 
 model VillaShareholder {

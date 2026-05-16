@@ -9,13 +9,17 @@ const UpdateShareholderSchema = z.object({
   email: z.string().email().optional().or(z.literal("")),
 });
 
+function shareholderWhere(id: string, userId: string, role: string) {
+  return role === "ADMIN" ? { id } : { id, createdById: userId };
+}
+
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const shareholder = await prisma.shareholder.findUnique({
-    where: { id },
+  const shareholder = await prisma.shareholder.findFirst({
+    where: shareholderWhere(id, session.user.id, session.user.role as string),
     include: {
       villas: {
         include: {
@@ -24,9 +28,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
               id: true,
               villaNumber: true,
               address: true,
-              rooms: {
-                include: { records: true },
-              },
+              rooms: { include: { records: true } },
               expenses: true,
             },
           },
@@ -44,6 +46,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
+  const existing = await prisma.shareholder.findFirst({
+    where: shareholderWhere(id, session.user.id, session.user.role as string),
+  });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
   const body = await req.json();
   const parsed = UpdateShareholderSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -65,6 +72,10 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
+  const existing = await prisma.shareholder.findFirst({
+    where: shareholderWhere(id, session.user.id, session.user.role as string),
+  });
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const inUse = await prisma.villaShareholder.count({ where: { shareholderId: id } });
   if (inUse > 0) {

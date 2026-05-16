@@ -15,9 +15,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const year = parseInt(searchParams.get("year") ?? String(new Date().getFullYear()));
   const month = parseInt(searchParams.get("month") ?? String(new Date().getMonth() + 1));
 
+  const isAdmin = session.user.role === "ADMIN";
   const [shareholder, settings] = await Promise.all([
-    prisma.shareholder.findUnique({
-      where: { id },
+    prisma.shareholder.findFirst({
+      where: isAdmin ? { id } : { id, createdById: session.user.id },
       include: {
         villas: {
           include: {
