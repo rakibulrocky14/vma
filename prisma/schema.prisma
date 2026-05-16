@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+}
+
+enum BookStatus {
+  OPEN
+  CLOSED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(MANAGER)
+  villas       Villa[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Villa {
+  id           String             @id @default(cuid())
+  villaNumber  String
+  address      String
+  totalRooms   Int
+  ownerId      String
+  owner        User               @relation(fields: [ownerId], references: [id])
+  rooms        Room[]
+  shareholders VillaShareholder[]
+  expenses     Expense[]
+  monthlyBooks MonthlyBook[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model Room {
+  id         String              @id @default(cuid())
+  villaId    String
+  roomNumber String
+  villa      Villa               @relation(fields: [villaId], references: [id], onDelete: Cascade)
+  records    RoomMonthlyRecord[]
+  createdAt  DateTime            @default(now())
+}
+
+model Shareholder {
+  id        String             @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  villas    VillaShareholder[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+}
+
+model VillaShareholder {
+  id            String      @id @default(cuid())
+  villaId       String
+  shareholderId String
+  percentage    Decimal
+  villa         Villa       @relation(fields: [villaId], references: [id], onDelete: Cascade)
+  shareholder   Shareholder @relation(fields: [shareholderId], references: [id])
+
+  @@unique([villaId, shareholderId])
+}
+
+model MonthlyBook {
+  id         String     @id @default(cuid())
+  villaId    String
+  year       Int
+  month      Int
+  status     BookStatus @default(OPEN)
+  closedAt   DateTime?
+  closedById String?
+  villa      Villa      @relation(fields: [villaId], references: [id], onDelete: Cascade)
+  createdAt  DateTime   @default(now())
+
+  @@unique([villaId, year, month])
+}
+
+model RoomMonthlyRecord {
+  id         String  @id @default(cuid())
+  roomId     String
+  year       Int
+  month      Int
+  rentAmount Decimal @default(0)
+  paidAmount Decimal @default(0)
+  room       Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([roomId, year, month])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  villaId     String
+  year        Int
+  month       Int
+  description String
+  amount      Decimal
+  villa       Villa    @relation(fields: [villaId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Settings {
+  id          String   @id @default("singleton")
+  companyName String   @default("Villa Management")
+  logoUrl     String?
+  address     String?
+  updatedAt   DateTime @updatedAt
+}
