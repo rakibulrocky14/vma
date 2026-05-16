@@ -11,9 +11,15 @@ if [ -z "$AUTH_SECRET" ]; then
   export AUTH_SECRET=$(cat "$SECRET_FILE")
 fi
 
-# Default NEXTAUTH_URL if not set
+# Auto-detect server IP for NEXTAUTH_URL if not set
 if [ -z "$NEXTAUTH_URL" ]; then
-  export NEXTAUTH_URL="http://localhost:3000"
+  SERVER_IP=$(curl -s --max-time 3 https://ifconfig.me 2>/dev/null || hostname -I | awk '{print $1}')
+  if [ -n "$SERVER_IP" ]; then
+    export NEXTAUTH_URL="http://${SERVER_IP}:3000"
+    echo "▶ Auto-detected NEXTAUTH_URL: $NEXTAUTH_URL"
+  else
+    export NEXTAUTH_URL="http://localhost:3000"
+  fi
 fi
 
 echo "▶ Running database migrations..."
