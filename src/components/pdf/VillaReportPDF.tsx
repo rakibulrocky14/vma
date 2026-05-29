@@ -600,16 +600,6 @@ export function VillaReportPDF({ data }: { data: VillaReportData }) {
                 </View>
                 <View style={S.breakdown}>
                   <View style={S.bRow}>
-                    <Text style={S.bLabel}>Total rent expected</Text>
-                    <Text style={S.bValue}>{qar(summary.totalRent)}</Text>
-                  </View>
-                  {showCommission && (
-                    <View style={S.bRow}>
-                      <Text style={S.bLabel}>Less: commission</Text>
-                      <Text style={[S.bValue, { color: P.amber }]}>−{qar(summary.totalCommission)}</Text>
-                    </View>
-                  )}
-                  <View style={S.bRow}>
                     <Text style={S.bLabel}>Total collected</Text>
                     <Text style={[S.bValue, { color: P.green }]}>{qar(summary.totalCollected)}</Text>
                   </View>
