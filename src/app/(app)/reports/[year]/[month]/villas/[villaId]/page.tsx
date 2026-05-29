@@ -32,10 +32,18 @@ export default function VillaReportSnapshotPage() {
   const rooms = (villaData.rooms ?? []).map((r: {
     id: string;
     roomNumber: string;
-    records?: { rentAmount: unknown; paidAmount: unknown; year: number; month: number }[];
+    carryIn?: number;
+    records?: { rentAmount: unknown; paidAmount: unknown; commission?: unknown; status?: "OCCUPIED" | "EMPTY" | "SOLD" | null; year: number; month: number }[];
   }) => {
     const rec = (r.records ?? []).find((rec) => rec.year === y && rec.month === m);
-    return { ...r, rentAmount: rec?.rentAmount ?? 0, paidAmount: rec?.paidAmount ?? 0 };
+    return {
+      ...r,
+      rentAmount: rec?.rentAmount ?? 0,
+      paidAmount: rec?.paidAmount ?? 0,
+      commission: rec?.commission ?? 0,
+      status: rec?.status ?? "OCCUPIED",
+      carryIn: Math.max(0, r.carryIn ?? 0),
+    };
   });
 
   const expenses = (villaData.expenses ?? []).filter((e: { year: number; month: number }) => e.year === y && e.month === m);
@@ -93,10 +101,11 @@ export default function VillaReportSnapshotPage() {
               {/* MOBILE list */}
               <div className="md:hidden space-y-2">
                 {rooms.map(
-                  (r: { id: string; roomNumber: string; rentAmount: unknown; paidAmount: unknown }) => {
-                    const rent = parseDecimal(r.rentAmount);
+                  (r: { id: string; roomNumber: string; rentAmount: unknown; paidAmount: unknown; commission?: unknown; status?: "OCCUPIED" | "EMPTY" | "SOLD" | null; carryIn?: number }) => {
+                    const status = r.status ?? "OCCUPIED";
+                    const rent = parseDecimal(r.rentAmount) + (r.carryIn ?? 0);
                     const paid = parseDecimal(r.paidAmount);
-                    const due = rent - paid;
+                    const due = rent - paid - parseDecimal(r.commission);
                     return (
                       <div
                         key={r.id}
@@ -104,31 +113,46 @@ export default function VillaReportSnapshotPage() {
                       >
                         <div className="flex items-center justify-between mb-2">
                           <p className="text-[14px] font-bold text-slate-900">{r.roomNumber}</p>
-                          <p
-                            className={
-                              "text-[12px] font-mono tabular-nums font-semibold " +
-                              (due > 0 ? "text-red-700" : "text-slate-400")
-                            }
-                          >
-                            {due > 0 ? `${formatQAR(due)} due` : "Settled"}
-                          </p>
+                          {status !== "OCCUPIED" ? (
+                            <span
+                              className={
+                                "inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold tracking-wider ring-1 " +
+                                (status === "EMPTY"
+                                  ? "bg-amber-50 text-amber-700 ring-amber-200"
+                                  : "bg-slate-100 text-slate-700 ring-slate-300")
+                              }
+                            >
+                              {status}
+                            </span>
+                          ) : (
+                            <p
+                              className={
+                                "text-[12px] font-mono tabular-nums font-semibold " +
+                                (due > 0 ? "text-red-700" : "text-slate-400")
+                              }
+                            >
+                              {due > 0 ? `${formatQAR(due)} due` : "Settled"}
+                            </p>
+                          )}
                         </div>
-                        <div className="grid grid-cols-2 gap-2 text-[12px]">
-                          <div>
-                            <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 mb-0.5">
-                              Rent
-                            </p>
-                            <p className="font-mono tabular-nums text-slate-800">{formatQAR(rent)}</p>
+                        {status === "OCCUPIED" && (
+                          <div className="grid grid-cols-2 gap-2 text-[12px]">
+                            <div>
+                              <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 mb-0.5">
+                                Rent
+                              </p>
+                              <p className="font-mono tabular-nums text-slate-800">{formatQAR(rent)}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 mb-0.5">
+                                Paid
+                              </p>
+                              <p className="font-mono tabular-nums text-emerald-700 font-semibold">
+                                {formatQAR(paid)}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-[10px] uppercase tracking-wider font-semibold text-slate-500 mb-0.5">
-                              Paid
-                            </p>
-                            <p className="font-mono tabular-nums text-emerald-700 font-semibold">
-                              {formatQAR(paid)}
-                            </p>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     );
                   }
@@ -157,12 +181,38 @@ export default function VillaReportSnapshotPage() {
                   <tbody>
                     {rooms.map(
                       (
-                        r: { id: string; roomNumber: string; rentAmount: unknown; paidAmount: unknown },
+                        r: { id: string; roomNumber: string; rentAmount: unknown; paidAmount: unknown; commission?: unknown; status?: "OCCUPIED" | "EMPTY" | "SOLD" | null; carryIn?: number },
                         i: number
                       ) => {
-                        const rent = parseDecimal(r.rentAmount);
+                        const status = r.status ?? "OCCUPIED";
+                        const rent = parseDecimal(r.rentAmount) + (r.carryIn ?? 0);
                         const paid = parseDecimal(r.paidAmount);
-                        const due = rent - paid;
+                        const due = rent - paid - parseDecimal(r.commission);
+                        if (status !== "OCCUPIED") {
+                          return (
+                            <tr
+                              key={r.id}
+                              className={
+                                "border-b border-slate-100 last:border-0 " +
+                                (i % 2 === 1 ? "bg-slate-50/40" : "")
+                              }
+                            >
+                              <td className="px-4 py-1.5 font-semibold text-slate-800 text-[13px]">
+                                {r.roomNumber}
+                              </td>
+                              <td
+                                className={
+                                  "px-4 py-1.5 text-right font-bold text-[12px] tracking-wider " +
+                                  (status === "EMPTY" ? "text-amber-700" : "text-slate-600")
+                                }
+                              >
+                                {status}
+                              </td>
+                              <td className="px-4 py-1.5 text-right text-slate-300 text-[13px]">—</td>
+                              <td className="px-4 py-1.5 text-right text-slate-300 text-[13px]">—</td>
+                            </tr>
+                          );
+                        }
                         return (
                           <tr
                             key={r.id}
@@ -269,9 +319,12 @@ export default function VillaReportSnapshotPage() {
               </h2>
             </div>
             <ProfitSummary
-              rooms={rooms.map((r: { rentAmount: unknown; paidAmount: unknown }) => ({
+              rooms={rooms.map((r: { rentAmount: unknown; paidAmount: unknown; commission?: unknown; status?: "OCCUPIED" | "EMPTY" | "SOLD" | null; carryIn?: number }) => ({
                 rentAmount: r.rentAmount,
                 paidAmount: r.paidAmount,
+                commission: r.commission,
+                status: r.status,
+                carryIn: r.carryIn,
               }))}
               expenses={expenses}
               shareholders={shareholders}

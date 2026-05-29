@@ -2,7 +2,6 @@
 
 import { cn } from "@/lib/utils";
 import {
-  Building2,
   LayoutDashboard,
   Users,
   BarChart3,
@@ -12,7 +11,9 @@ import {
   UserCog,
   TrendingUp,
   Wallet,
+  UserCircle2,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
@@ -23,7 +24,12 @@ const navItems = [
   { href: "/income-sources", icon: TrendingUp, label: "Income Sources" },
   { href: "/holdings", icon: Wallet, label: "My Holdings" },
   { href: "/reports", icon: BarChart3, label: "Reports" },
-  { href: "/settings", icon: Settings, label: "Settings" },
+  { href: "/profile", icon: UserCircle2, label: "My Profile" },
+];
+
+const adminNavItems = [
+  { href: "/users", icon: UserCog, label: "Users" },
+  { href: "/settings", icon: Settings, label: "App Settings" },
 ];
 
 interface SidebarProps {
@@ -39,6 +45,7 @@ export function Sidebar({ onClose, mobileMode = false }: SidebarProps) {
     if (href === "/dashboard")
       return pathname === "/dashboard" || pathname.startsWith("/villas");
     if (href === "/holdings") return pathname === "/holdings";
+    if (href === "/profile") return pathname === "/profile";
     return pathname.startsWith(href);
   }
 
@@ -66,8 +73,15 @@ export function Sidebar({ onClose, mobileMode = false }: SidebarProps) {
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 min-w-0">
             <div className="relative shrink-0">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-amber-700 shadow-[0_8px_20px_rgba(161,98,7,0.45)]">
-                <Building2 className="h-5 w-5 text-white" strokeWidth={2.5} />
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-[0_8px_20px_rgba(0,0,0,0.25)] overflow-hidden p-1">
+                <Image
+                  src="/logo.png"
+                  alt="VMA"
+                  width={44}
+                  height={44}
+                  className="h-full w-full object-contain"
+                  priority
+                />
               </div>
               <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-emerald-400 ring-2 ring-slate-900" />
             </div>
@@ -140,33 +154,38 @@ export function Sidebar({ onClose, mobileMode = false }: SidebarProps) {
               Administration
             </p>
             <ul className="flex flex-col gap-0.5">
-              <li>
-                <Link
-                  href="/users"
-                  onClick={onClose}
-                  className={cn(
-                    "group relative flex items-center gap-3 rounded-lg px-3 py-3 text-[14px] font-medium",
-                    "transition-all duration-200 min-h-[44px]",
-                    pathname.startsWith("/users")
-                      ? "bg-white/[0.08] text-white shadow-sm"
-                      : "text-slate-400 hover:bg-white/[0.04] hover:text-white active:bg-white/[0.08]"
-                  )}
-                >
-                  {pathname.startsWith("/users") && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r-full bg-gradient-to-b from-amber-400 to-amber-600 shadow-[0_0_12px_rgba(245,158,11,0.6)]" />
-                  )}
-                  <UserCog
-                    className={cn(
-                      "h-[18px] w-[18px] shrink-0 transition-all",
-                      pathname.startsWith("/users")
-                        ? "text-amber-400"
-                        : "text-slate-500 group-hover:text-slate-200"
-                    )}
-                    strokeWidth={pathname.startsWith("/users") ? 2.5 : 2}
-                  />
-                  <span className={pathname.startsWith("/users") ? "font-semibold" : ""}>Users</span>
-                </Link>
-              </li>
+              {adminNavItems.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={onClose}
+                      className={cn(
+                        "group relative flex items-center gap-3 rounded-lg px-3 py-3 text-[14px] font-medium",
+                        "transition-all duration-200 min-h-[44px]",
+                        active
+                          ? "bg-white/[0.08] text-white shadow-sm"
+                          : "text-slate-400 hover:bg-white/[0.04] hover:text-white active:bg-white/[0.08]"
+                      )}
+                    >
+                      {active && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r-full bg-gradient-to-b from-amber-400 to-amber-600 shadow-[0_0_12px_rgba(245,158,11,0.6)]" />
+                      )}
+                      <item.icon
+                        className={cn(
+                          "h-[18px] w-[18px] shrink-0 transition-all",
+                          active
+                            ? "text-amber-400"
+                            : "text-slate-500 group-hover:text-slate-200"
+                        )}
+                        strokeWidth={active ? 2.5 : 2}
+                      />
+                      <span className={active ? "font-semibold" : ""}>{item.label}</span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </>
         )}

@@ -2,17 +2,22 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { PageSpinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
-import { Upload, Building2 } from "lucide-react";
+import { Upload, Building2, Lock } from "lucide-react";
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { data: session, status: sessionStatus } = useSession();
   const [form, setForm] = useState({ companyName: "", address: "" });
   const [uploading, setUploading] = useState(false);
+
+  const isAdmin = session?.user?.role === "ADMIN";
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ["settings"],
@@ -64,7 +69,28 @@ export default function SettingsPage() {
     }
   }
 
-  if (isLoading) return <PageSpinner />;
+  if (isLoading || sessionStatus === "loading") return <PageSpinner />;
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-full bg-[#faf7f1] flex items-center justify-center px-4">
+        <div className="max-w-md w-full rounded-xl bg-white border border-slate-200/80 shadow-card p-8 text-center">
+          <div className="mx-auto h-14 w-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+            <Lock className="h-6 w-6 text-slate-500" />
+          </div>
+          <h1 className="text-[18px] font-bold text-slate-900 mb-2">Admin only</h1>
+          <p className="text-[13px] text-slate-600 mb-5">
+            App Settings are restricted to administrators. To update your own details, head to your profile.
+          </p>
+          <Link href="/profile">
+            <Button variant="secondary" size="md" className="w-full sm:w-auto">
+              Go to My Profile
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-full bg-[#faf7f1]">

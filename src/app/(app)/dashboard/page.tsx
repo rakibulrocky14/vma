@@ -18,7 +18,7 @@ import {
 import { format } from "date-fns";
 
 interface DashRoom {
-  records?: { rentAmount: unknown; paidAmount: unknown }[];
+  records?: { rentAmount: unknown; paidAmount: unknown; commission?: unknown; status?: "OCCUPIED" | "EMPTY" | "SOLD" | null }[];
 }
 interface DashVilla {
   id: string;
@@ -32,14 +32,17 @@ interface DashVilla {
 function getStats(villa: DashVilla) {
   let totalRent = 0;
   let totalCollected = 0;
+  let totalCommission = 0;
   for (const room of villa.rooms ?? []) {
     const record = room.records?.[0];
-    if (record) {
-      totalRent += parseDecimal(record.rentAmount);
-      totalCollected += parseDecimal(record.paidAmount);
-    }
+    if (!record) continue;
+    // Empty / sold rooms don't count toward collection
+    if (record.status && record.status !== "OCCUPIED") continue;
+    totalRent += parseDecimal(record.rentAmount);
+    totalCollected += parseDecimal(record.paidAmount);
+    totalCommission += parseDecimal(record.commission);
   }
-  return { totalRent, totalCollected };
+  return { totalRent, totalCollected, totalCommission };
 }
 
 export default function DashboardPage() {
@@ -64,13 +67,16 @@ export default function DashboardPage() {
       return {
         rent: acc.rent + s.totalRent,
         collected: acc.collected + s.totalCollected,
+        commission: acc.commission + s.totalCommission,
         rooms: acc.rooms + (v.totalRooms ?? 0),
       };
     },
-    { rent: 0, collected: 0, rooms: 0 }
+    { rent: 0, collected: 0, commission: 0, rooms: 0 }
   );
-  const outstanding = totals.rent - totals.collected;
-  const overallPct = totals.rent > 0 ? Math.round((totals.collected / totals.rent) * 100) : 0;
+  // Commission is deducted from rent, so what's collectable = rent − commission
+  const collectable = totals.rent - totals.commission;
+  const outstanding = Math.max(0, collectable - totals.collected);
+  const overallPct = collectable > 0 ? Math.round((totals.collected / collectable) * 100) : 0;
 
   return (
     <div className="min-h-full">
@@ -123,7 +129,7 @@ export default function DashboardPage() {
               </p>
 
               <p className="mt-2 text-[12.5px] sm:text-[13.5px] text-slate-300">
-                of <span className="font-mono text-white">{formatQAR(totals.rent)}</span> expected
+                of <span className="font-mono text-white">{formatQAR(collectable)}</span> expected
                 {overallPct > 0 && (
                   <span className="ml-1 text-amber-300">· {overallPct}%</span>
                 )}
@@ -255,8 +261,9 @@ export default function DashboardPage() {
           {/* Villa grid */}
           <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {list.map((villa) => {
-              const { totalRent, totalCollected } = getStats(villa);
-              const pct = totalRent > 0 ? Math.round((totalCollected / totalRent) * 100) : 0;
+              const { totalRent, totalCollected, totalCommission } = getStats(villa);
+              const cardCollectable = totalRent - totalCommission;
+              const pct = cardCollectable > 0 ? Math.round((totalCollected / cardCollectable) * 100) : 0;
               const shareholderCount = villa.shareholders?.length ?? 0;
               const status =
                 totalRent === 0
@@ -314,7 +321,7 @@ export default function DashboardPage() {
                           {formatQAR(totalCollected)}
                         </p>
                         <p className="text-[11px] sm:text-[11.5px] text-slate-500 tabular-nums mt-0.5">
-                          of {formatQAR(totalRent)}
+                          of {formatQAR(cardCollectable)}
                         </p>
                       </div>
 

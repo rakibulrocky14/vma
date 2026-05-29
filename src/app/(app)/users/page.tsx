@@ -283,7 +283,7 @@ export default function UsersPage() {
                     type="button"
                     onClick={() => setDeleteTarget(user)}
                     aria-label={`Delete ${user.name}`}
-                    className="shrink-0 flex h-10 w-10 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 active:bg-red-100 transition-colors cursor-pointer"
+                    className="shrink-0 flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600 active:bg-red-100 transition-colors cursor-pointer"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>

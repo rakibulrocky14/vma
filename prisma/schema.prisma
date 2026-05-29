@@ -18,6 +18,12 @@ enum BookStatus {
   CLOSED
 }
 
+enum RoomStatus {
+  OCCUPIED
+  EMPTY
+  SOLD
+}
+
 model User {
   id                String         @id @default(cuid())
   name              String
@@ -98,13 +104,15 @@ model MonthlyBook {
 }
 
 model RoomMonthlyRecord {
-  id         String  @id @default(cuid())
+  id         String     @id @default(cuid())
   roomId     String
   year       Int
   month      Int
-  rentAmount Decimal @default(0)
-  paidAmount Decimal @default(0)
-  room       Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  rentAmount Decimal    @default(0)
+  paidAmount Decimal    @default(0)
+  commission Decimal    @default(0)
+  status     RoomStatus @default(OCCUPIED)
+  room       Room       @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
   @@unique([roomId, year, month])
 }
@@ -144,14 +152,28 @@ model IncomeSource {
 }
 
 model IncomeSourceEntry {
-  id             String                   @id @default(cuid())
+  id             String                    @id @default(cuid())
   incomeSourceId String
-  incomeSource   IncomeSource             @relation(fields: [incomeSourceId], references: [id], onDelete: Cascade)
-  propertyName   String                   // free-text villa/property name
-  mySharePercent Decimal                  // user's % share (informational)
+  incomeSource   IncomeSource              @relation(fields: [incomeSourceId], references: [id], onDelete: Cascade)
+  propertyName   String                    // free-text villa/property name
+  mySharePercent Decimal                   // user's % share (informational)
   shares         IncomeSourceEntryShare[]
-  createdAt      DateTime                 @default(now())
-  updatedAt      DateTime                 @updatedAt
+  records        IncomeSourceEntryRecord[]
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+}
+
+model IncomeSourceEntryRecord {
+  id        String            @id @default(cuid())
+  entryId   String
+  year      Int
+  month     Int
+  profit    Decimal           @default(0)
+  entry     IncomeSourceEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@unique([entryId, year, month])
 }
 
 model IncomeSourceEntryShare {

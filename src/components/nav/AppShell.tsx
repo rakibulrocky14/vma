@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./Sidebar";
-import { Menu, Building2 } from "lucide-react";
+import { Menu } from "lucide-react";
+import Image from "next/image";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -48,8 +49,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Menu className="h-5 w-5" strokeWidth={2.2} />
           </button>
           <div className="flex items-center gap-2 min-w-0">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-amber-700 shadow-[0_4px_10px_rgba(161,98,7,0.35)]">
-              <Building2 className="h-4 w-4 text-white" strokeWidth={2.5} />
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white border border-slate-200 overflow-hidden p-0.5">
+              <Image
+                src="/logo.png"
+                alt="VMA"
+                width={32}
+                height={32}
+                className="h-full w-full object-contain"
+                priority
+              />
             </div>
             <span className="text-[14px] font-bold tracking-tight text-slate-900 truncate">
               Villa Management

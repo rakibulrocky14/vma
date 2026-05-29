@@ -4,6 +4,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { ShareholderReportPDF } from "@/components/pdf/ShareholderReportPDF";
 import { NextResponse } from "next/server";
 import { computeProfit } from "@/lib/calculations";
+import { getLogoDataUri } from "@/lib/pdf-logo";
 import { parseDecimal } from "@/lib/currency";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -26,6 +27,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
               include: {
                 rooms: { include: { records: { where: { year, month } } } },
                 expenses: { where: { year, month } },
+              },
+            },
+          },
+        },
+        incomeSourceShares: {
+          include: {
+            entry: {
+              include: {
+                incomeSource: { select: { id: true, name: true } },
+                records: { where: { year, month } },
               },
             },
           },
@@ -60,6 +71,23 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     };
   });
 
+  const sourceEntries = shareholder.incomeSourceShares.map((share) => {
+    const sharePercent = parseDecimal(share.sharePercent);
+    const ownerPct = parseDecimal(share.entry.mySharePercent);
+    const profit = share.entry.records[0] ? parseDecimal(share.entry.records[0].profit) : 0;
+    const myCut = (profit * ownerPct) / 100;
+    const amount = (myCut * sharePercent) / 100;
+    return {
+      shareId: share.id,
+      sourceName: share.entry.incomeSource.name,
+      propertyName: share.entry.propertyName,
+      sharePercent,
+      myShareOwnerPercent: ownerPct,
+      profit,
+      amount,
+    };
+  });
+
   const data = {
     shareholder: {
       id: shareholder.id,
@@ -70,11 +98,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     year,
     month,
     villaEntries,
+    sourceEntries,
     settings: {
       companyName: settings?.companyName ?? "Villa Management",
-      logoUrl: settings?.logoUrl
-        ? `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}${settings.logoUrl}`
-        : null,
+      logoUrl: getLogoDataUri(settings?.logoUrl),
       address: settings?.address ?? null,
     },
   };

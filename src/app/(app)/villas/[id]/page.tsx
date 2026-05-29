@@ -34,6 +34,8 @@ const MONTHS_LONG = [
 interface RoomRecord {
   rentAmount: unknown;
   paidAmount: unknown;
+  commission?: unknown;
+  status?: "OCCUPIED" | "EMPTY" | "SOLD" | null;
   year: number;
   month: number;
 }
@@ -42,6 +44,7 @@ interface RoomWithRecords {
   id: string;
   roomNumber: string;
   records: RoomRecord[];
+  carryIn?: number;
 }
 
 interface VillaShareholderEntry {
@@ -138,7 +141,13 @@ export default function VillaPage() {
 
   const profitRooms = rooms.map((r) => {
     const rec = r.records?.[0];
-    return { rentAmount: rec?.rentAmount ?? 0, paidAmount: rec?.paidAmount ?? 0 };
+    return {
+      rentAmount: rec?.rentAmount ?? 0,
+      paidAmount: rec?.paidAmount ?? 0,
+      commission: rec?.commission ?? 0,
+      status: rec?.status ?? "OCCUPIED",
+      carryIn: r.carryIn ?? 0,
+    };
   });
 
   const monthLabel = `${MONTHS_LONG[month - 1]} ${year}`;
@@ -245,14 +254,14 @@ export default function VillaPage() {
               <button
                 type="button"
                 onClick={() => shiftMonth(-1)}
-                className="flex h-10 w-10 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 transition-colors cursor-pointer"
+                className="flex h-11 w-11 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 transition-colors cursor-pointer"
                 aria-label="Previous month"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
 
               <div className="flex-1 min-w-0 overflow-x-auto snap-x-mandatory">
-                <div className="inline-flex h-10 sm:h-9 items-center gap-0.5 rounded-lg border border-slate-200 bg-white p-0.5">
+                <div className="inline-flex h-11 sm:h-9 items-center gap-0.5 rounded-lg border border-slate-200 bg-white p-0.5">
                   {MONTHS_SHORT.map((m, i) => {
                     const value = i + 1;
                     const active = value === month;
@@ -262,7 +271,7 @@ export default function VillaPage() {
                         type="button"
                         onClick={() => setMonth(value)}
                         className={
-                          "snap-center-item h-full px-3 sm:px-2.5 rounded-md text-[13px] sm:text-[12px] font-semibold transition-colors cursor-pointer min-w-[40px] " +
+                          "snap-center-item h-full px-3.5 sm:px-2.5 rounded-md text-[13px] sm:text-[12px] font-semibold transition-colors cursor-pointer min-w-[44px] sm:min-w-[40px] " +
                           (active
                             ? "bg-slate-900 text-white shadow-sm"
                             : "text-slate-600 hover:bg-slate-100 active:bg-slate-200 hover:text-slate-900")
@@ -278,7 +287,7 @@ export default function VillaPage() {
               <button
                 type="button"
                 onClick={() => shiftMonth(1)}
-                className="flex h-10 w-10 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 transition-colors cursor-pointer"
+                className="flex h-11 w-11 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 transition-colors cursor-pointer"
                 aria-label="Next month"
               >
                 <ChevronRight className="h-4 w-4" />

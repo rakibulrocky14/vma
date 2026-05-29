@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
@@ -10,6 +11,7 @@ import Link from "next/link";
 
 export default function NewShareholderPage() {
   const router = useRouter();
+  const qc = useQueryClient();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", email: "" });
@@ -32,6 +34,7 @@ export default function NewShareholderPage() {
     setLoading(false);
 
     if (res.ok) {
+      await qc.invalidateQueries({ queryKey: ["shareholders"] });
       toast("Shareholder added");
       router.push("/shareholders");
     } else {

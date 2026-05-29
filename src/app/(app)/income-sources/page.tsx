@@ -156,9 +156,11 @@ export default function IncomeSourcesPage() {
     : list;
 
   function handleCreated(src: IncomeSourceRow) {
+    const safeSrc: IncomeSourceRow = { ...src, entries: src.entries ?? [] };
     qc.setQueryData<IncomeSourceRow[]>(["income-sources"], (prev) =>
-      prev ? [src as IncomeSourceRow, ...prev] : [src as IncomeSourceRow]
+      prev ? [safeSrc, ...prev] : [safeSrc]
     );
+    qc.invalidateQueries({ queryKey: ["income-sources"] });
     toast("Source added — add properties to it now");
     setAddOpen(false);
   }

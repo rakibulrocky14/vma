@@ -9,287 +9,342 @@ import {
 import { computeProfit } from "@/lib/calculations";
 import { parseDecimal } from "@/lib/currency";
 
-const palette = {
-  ink: "#0f172a",
-  body: "#1e293b",
-  muted: "#64748b",
-  subtle: "#94a3b8",
-  border: "#e2e8f0",
-  hairline: "#f1f5f9",
-  bgSoft: "#f8fafc",
-  navy: "#1e3a8a",
-  gold: "#b45309",
-  goldBg: "#fef3c7",
-  green: "#047857",
-  greenBg: "#ecfdf5",
-  red: "#b91c1c",
-  redBg: "#fef2f2",
-  amber: "#d97706",
+const P = {
+  deepInk: "#0B1120",
+  ink: "#0F172A",
+  body: "#1E293B",
+  muted: "#64748B",
+  subtle: "#94A3B8",
+  border: "#E2E8F0",
+  hairline: "#F1F5F9",
+  bgSoft: "#F8FAFC",
+  gold: "#C8960C",
+  goldStripe: "#D4A017",
+  goldBg: "#FFFBEB",
+  goldBorder: "#FDE68A",
+  green: "#065F46",
+  greenBg: "#ECFDF5",
+  greenBorder: "#6EE7B7",
+  red: "#991B1B",
+  redBg: "#FEF2F2",
+  redBorder: "#FECACA",
+  amber: "#B45309",
+  amberBg: "#FFFBEB",
+  blue: "#1D4ED8",
+  white: "#FFFFFF",
 };
 
-const styles = StyleSheet.create({
+const S = StyleSheet.create({
   page: {
     fontFamily: "Helvetica",
     fontSize: 8,
-    paddingTop: 28,
-    paddingBottom: 36,
-    paddingHorizontal: 32,
-    backgroundColor: "#ffffff",
-    color: palette.body,
+    paddingBottom: 52,
+    backgroundColor: P.white,
+    color: P.body,
   },
 
-  /* HEADER */
-  header: {
+  /* ── HEADER BAND ── */
+  headerBand: {
+    backgroundColor: P.deepInk,
+    paddingTop: 18,
+    paddingBottom: 16,
+    paddingHorizontal: 36,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  logoTile: {
+    width: 52,
+    height: 52,
+    borderRadius: 8,
+    backgroundColor: P.white,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 5,
+  },
+  logoImg: { width: "100%", height: "100%", objectFit: "contain" },
+  logoBoxText: { color: P.gold, fontFamily: "Helvetica-Bold", fontSize: 22 },
+  headerCenter: { flex: 1, alignItems: "center", paddingHorizontal: 12 },
+  headerSpacer: { width: 52 },
+  reportType: {
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+    color: P.gold,
+    letterSpacing: 2.5,
+    marginBottom: 3,
+    textAlign: "center",
+  },
+  reportTitle: {
+    fontSize: 21,
+    fontFamily: "Helvetica-Bold",
+    color: P.white,
+    letterSpacing: -0.3,
+    textAlign: "center",
+  },
+  reportPeriod: {
+    fontSize: 9,
+    color: "#CBD5E1",
+    marginTop: 3,
+    letterSpacing: 0.5,
+    textAlign: "center",
+  },
+
+  /* ── GOLD STRIPE ── */
+  goldStripe: {
+    height: 3,
+    backgroundColor: P.goldStripe,
+  },
+
+  /* ── CONTENT AREA ── */
+  content: {
+    paddingHorizontal: 36,
+    paddingTop: 16,
+  },
+
+  /* ── TWO-COLUMN BODY ── */
+  twoCol: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    marginBottom: 4,
   },
-  brand: { flexDirection: "row", alignItems: "center", gap: 8 },
-  logo: { width: 28, height: 28, objectFit: "contain" },
-  logoFallback: {
-    width: 28,
-    height: 28,
-    backgroundColor: palette.navy,
-    borderRadius: 3,
-    alignItems: "center",
-    justifyContent: "center",
+  colLeft: { width: "45%" },
+  colRight: { width: "51%" },
+  colLeftWide: { width: "54%" },
+  colRightNarrow: { width: "42%" },
+
+  /* ── PROPERTY STRIP ── */
+  strip: {
+    flexDirection: "row",
+    alignItems: "stretch",
+    backgroundColor: P.bgSoft,
+    borderWidth: 1,
+    borderColor: P.border,
+    borderStyle: "solid",
+    borderRadius: 4,
+    overflow: "hidden",
+    marginBottom: 12,
   },
-  logoFallbackText: { color: "#ffffff", fontFamily: "Helvetica-Bold", fontSize: 12 },
-  companyName: { fontSize: 9.5, fontFamily: "Helvetica-Bold", color: palette.ink, letterSpacing: 0.4 },
-  companyAddress: { fontSize: 7, color: palette.muted, marginTop: 1 },
-  reportMeta: { alignItems: "flex-end" },
-  reportKicker: {
-    fontSize: 6.5,
+  stripItem: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  stripDivider: {
+    width: 1,
+    backgroundColor: P.border,
+  },
+  stripLabel: {
+    fontSize: 5.5,
     fontFamily: "Helvetica-Bold",
-    color: palette.gold,
-    letterSpacing: 1.4,
+    color: P.muted,
+    letterSpacing: 1.5,
+    marginBottom: 3,
   },
-  reportTitle: {
-    fontSize: 13,
+  stripValue: {
+    fontSize: 10,
     fontFamily: "Helvetica-Bold",
-    color: palette.ink,
-    marginTop: 1,
+    color: P.ink,
   },
-  reportPeriod: {
-    fontSize: 8,
-    color: palette.muted,
-    marginTop: 0,
-  },
-  divider: {
-    height: 1.5,
-    backgroundColor: palette.ink,
-    marginTop: 8,
-    marginBottom: 10,
-  },
-  dividerAccent: {
-    height: 1.5,
-    width: 44,
-    backgroundColor: palette.gold,
-    marginTop: -1.5,
-    marginBottom: 10,
+  stripSub: {
+    fontSize: 7.5,
+    color: P.body,
   },
 
-  /* PROPERTY STRIP */
-  propertyStrip: {
+  /* ── HERO ── */
+  heroProfitBand: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    backgroundColor: palette.bgSoft,
-    borderRadius: 3,
+    backgroundColor: P.greenBg,
+    borderLeftWidth: 4,
+    borderLeftColor: P.green,
+    borderLeftStyle: "solid",
+    borderWidth: 1,
+    borderColor: P.greenBorder,
+    borderStyle: "solid",
+    borderRadius: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     marginBottom: 10,
-    gap: 12,
+    gap: 10,
   },
-  propLabel: {
-    fontSize: 6,
-    fontFamily: "Helvetica-Bold",
-    color: palette.muted,
-    letterSpacing: 1.2,
-  },
-  propValue: {
-    fontSize: 9.5,
-    fontFamily: "Helvetica-Bold",
-    color: palette.ink,
-    marginTop: 1,
-  },
-  propMeta: {
-    fontSize: 7.5,
-    color: palette.muted,
-    marginTop: 1,
-  },
-  propDivider: { width: 1, height: 22, backgroundColor: palette.border },
-
-  /* HERO KPI */
-  heroProfit: {
-    backgroundColor: palette.greenBg,
-    borderLeftWidth: 3,
-    borderLeftColor: palette.green,
+  heroLossBand: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: P.redBg,
+    borderLeftWidth: 4,
+    borderLeftColor: P.red,
     borderLeftStyle: "solid",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginBottom: 8,
-  },
-  heroLoss: {
-    backgroundColor: palette.redBg,
-    borderLeftWidth: 3,
-    borderLeftColor: palette.red,
-    borderLeftStyle: "solid",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: P.redBorder,
+    borderStyle: "solid",
+    borderRadius: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 10,
+    gap: 10,
   },
   heroLabel: {
     fontSize: 6.5,
     fontFamily: "Helvetica-Bold",
-    letterSpacing: 1.4,
+    letterSpacing: 1.8,
   },
   heroValue: {
-    fontSize: 18,
+    fontSize: 22,
     fontFamily: "Helvetica-Bold",
     marginTop: 2,
+    letterSpacing: -0.5,
   },
-  heroSub: { fontSize: 7, color: palette.muted, marginTop: 1 },
+  heroNote: {
+    fontSize: 7,
+    color: P.muted,
+    marginTop: 3,
+  },
 
-  /* KPI TILES */
-  kpiRow: { flexDirection: "row", gap: 6, marginBottom: 12 },
+  /* ── KPI TILES ── */
+  kpiRow: { flexDirection: "row", gap: 7, marginBottom: 14 },
   kpiTile: {
     flex: 1,
+    borderRadius: 4,
     borderWidth: 1,
-    borderColor: palette.border,
     borderStyle: "solid",
-    borderRadius: 3,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
   },
   kpiLabel: {
-    fontSize: 6,
+    fontSize: 5.5,
     fontFamily: "Helvetica-Bold",
-    color: palette.muted,
-    letterSpacing: 1.2,
+    letterSpacing: 1.5,
+    color: P.muted,
+    marginBottom: 3,
   },
   kpiValue: {
-    fontSize: 10,
+    fontSize: 11,
     fontFamily: "Helvetica-Bold",
-    color: palette.ink,
-    marginTop: 2,
+    letterSpacing: -0.3,
   },
 
-  /* SECTION HEADER */
-  sectionHeader: {
+  /* ── SECTION HEADER ── */
+  sectionHead: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginTop: 2,
-    marginBottom: 4,
+    gap: 7,
+    marginBottom: 5,
+    marginTop: 4,
   },
-  sectionBar: { width: 2.5, height: 10, backgroundColor: palette.gold },
+  sectionBar: {
+    width: 3,
+    height: 11,
+    backgroundColor: P.gold,
+    borderRadius: 2,
+  },
   sectionTitle: {
     fontSize: 8.5,
     fontFamily: "Helvetica-Bold",
-    color: palette.ink,
-    letterSpacing: 1.2,
+    color: P.ink,
+    letterSpacing: 1.4,
   },
   sectionCount: {
     fontSize: 7,
-    color: palette.muted,
+    color: P.muted,
     marginLeft: "auto",
   },
 
-  /* TABLE */
+  /* ── TABLE ── */
   table: {
     borderWidth: 1,
-    borderColor: palette.border,
+    borderColor: P.border,
     borderStyle: "solid",
-    borderRadius: 3,
+    borderRadius: 4,
     overflow: "hidden",
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  tableHeader: {
+  tHead: {
     flexDirection: "row",
-    backgroundColor: palette.ink,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    backgroundColor: P.ink,
+    paddingVertical: 5,
+    paddingHorizontal: 9,
   },
-  tableHeaderCell: {
-    fontFamily: "Helvetica-Bold",
+  tHeadCell: {
     fontSize: 6.5,
-    color: "#ffffff",
-    letterSpacing: 1,
+    fontFamily: "Helvetica-Bold",
+    color: "#E2E8F0",
+    letterSpacing: 1.2,
   },
-  tableRow: {
+  tRow: {
     flexDirection: "row",
-    paddingVertical: 2.5,
-    paddingHorizontal: 8,
+    paddingVertical: 3,
+    paddingHorizontal: 9,
     borderBottomWidth: 0.5,
-    borderBottomColor: palette.hairline,
+    borderBottomColor: P.hairline,
     borderBottomStyle: "solid",
   },
-  tableRowAlt: { backgroundColor: palette.bgSoft },
-  tableFooter: {
+  tRowAlt: { backgroundColor: P.bgSoft },
+  tFoot: {
     flexDirection: "row",
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    backgroundColor: palette.goldBg,
+    paddingVertical: 5,
+    paddingHorizontal: 9,
+    backgroundColor: P.goldBg,
     borderTopWidth: 1,
-    borderTopColor: palette.border,
+    borderTopColor: P.goldBorder,
     borderTopStyle: "solid",
   },
   cell: { flex: 1, fontSize: 8 },
-  cellRight: { flex: 1, textAlign: "right", fontSize: 8 },
+  cellR: { flex: 1, fontSize: 8, textAlign: "right" },
   bold: { fontFamily: "Helvetica-Bold" },
-  mono: { fontFamily: "Helvetica" },
+  italic: { fontFamily: "Helvetica-Oblique" },
 
-  /* PROFIT BREAKDOWN */
+  /* ── PROFIT BREAKDOWN ── */
   breakdown: {
     borderWidth: 1,
-    borderColor: palette.border,
+    borderColor: P.border,
     borderStyle: "solid",
-    borderRadius: 3,
-    padding: 10,
-    marginBottom: 10,
+    borderRadius: 4,
+    overflow: "hidden",
+    marginBottom: 12,
   },
-  breakdownRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 3,
-    borderBottomWidth: 0.5,
-    borderBottomColor: palette.hairline,
-    borderBottomStyle: "solid",
-  },
-  breakdownLast: { borderBottomWidth: 0 },
-  breakdownLabel: { fontSize: 8, color: palette.muted },
-  breakdownValue: { fontSize: 8, fontFamily: "Helvetica-Bold", color: palette.body },
-  breakdownTotal: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 5,
-    marginTop: 3,
-    borderTopWidth: 1.5,
-    borderTopColor: palette.ink,
-    borderTopStyle: "solid",
-  },
-
-  /* FOOTER */
-  footer: {
-    position: "absolute",
-    bottom: 16,
-    left: 32,
-    right: 32,
+  bRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 5,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: P.hairline,
+    borderBottomStyle: "solid",
+  },
+  bLabel: { fontSize: 8, color: P.muted },
+  bValue: { fontSize: 8, fontFamily: "Helvetica-Bold", color: P.body },
+  bTotalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: P.ink,
+  },
+  bTotalLabel: { fontSize: 8.5, fontFamily: "Helvetica-Bold", color: "#CBD5E1", letterSpacing: 0.6 },
+  bTotalValue: { fontSize: 13, fontFamily: "Helvetica-Bold" },
+
+  /* ── FOOTER ── */
+  footer: {
+    position: "absolute",
+    bottom: 16,
+    left: 36,
+    right: 36,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: 6,
     borderTopWidth: 0.5,
-    borderTopColor: palette.border,
+    borderTopColor: P.border,
     borderTopStyle: "solid",
   },
-  footerText: { fontSize: 6.5, color: palette.subtle, letterSpacing: 0.4 },
-  footerCenter: { fontSize: 6.5, color: palette.subtle, letterSpacing: 1.6 },
+  footerText: { fontSize: 6.5, color: P.subtle, letterSpacing: 0.4 },
+  footerCenter: { fontSize: 6.5, color: P.subtle, letterSpacing: 2 },
 });
 
 function qar(n: number) {
-  return `QAR ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `QAR ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -299,48 +354,43 @@ interface VillaReportData {
   address: string;
   year: number;
   month: number;
-  rooms: { id: string; roomNumber: string; rentAmount: unknown; paidAmount: unknown }[];
+  rooms: { id: string; roomNumber: string; rentAmount: unknown; paidAmount: unknown; commission?: unknown; status?: "OCCUPIED" | "EMPTY" | "SOLD" | null; carryIn?: number }[];
   expenses: { id: string; description: string; amount: unknown }[];
   shareholders: { shareholder: { id: string; name: string }; percentage: unknown }[];
   settings: { companyName: string; logoUrl: string | null; address: string | null };
 }
 
-function Header({ data }: { data: VillaReportData }) {
+function PageHeader({ data }: { data: VillaReportData }) {
   const { settings } = data;
   const initial = settings.companyName.trim().charAt(0).toUpperCase() || "V";
   return (
-    <View style={styles.header} fixed>
-      <View style={styles.brand}>
-        {settings.logoUrl ? (
-          <Image src={settings.logoUrl} style={styles.logo} />
-        ) : (
-          <View style={styles.logoFallback}>
-            <Text style={styles.logoFallbackText}>{initial}</Text>
-          </View>
-        )}
-        <View>
-          <Text style={styles.companyName}>{settings.companyName.toUpperCase()}</Text>
-          {settings.address && <Text style={styles.companyAddress}>{settings.address}</Text>}
+    <>
+      <View style={S.headerBand} fixed>
+        <View style={S.logoTile}>
+          {settings.logoUrl ? (
+            <Image src={settings.logoUrl} style={S.logoImg} />
+          ) : (
+            <Text style={S.logoBoxText}>{initial}</Text>
+          )}
         </View>
+        <View style={S.headerCenter}>
+          <Text style={S.reportType}>VILLA REPORT</Text>
+          <Text style={S.reportTitle}>{data.villaNumber}</Text>
+          <Text style={S.reportPeriod}>{MONTHS[data.month - 1]} {data.year}</Text>
+        </View>
+        <View style={S.headerSpacer} />
       </View>
-      <View style={styles.reportMeta}>
-        <Text style={styles.reportKicker}>VILLA REPORT</Text>
-        <Text style={styles.reportTitle}>{data.villaNumber}</Text>
-        <Text style={styles.reportPeriod}>{MONTHS[data.month - 1]} {data.year}</Text>
-      </View>
-    </View>
+      <View style={S.goldStripe} fixed />
+    </>
   );
 }
 
-function Footer({ companyName }: { companyName: string }) {
+function PageFooter({ companyName }: { companyName: string }) {
   return (
-    <View style={styles.footer} fixed>
-      <Text style={styles.footerText}>{companyName}</Text>
-      <Text style={styles.footerCenter}>CONFIDENTIAL</Text>
-      <Text
-        style={styles.footerText}
-        render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
-      />
+    <View style={S.footer} fixed>
+      <Text style={S.footerText}>{companyName}</Text>
+      <Text style={S.footerCenter}>CONFIDENTIAL</Text>
+      <Text style={S.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
     </View>
   );
 }
@@ -348,8 +398,11 @@ function Footer({ companyName }: { companyName: string }) {
 export function VillaReportPDF({ data }: { data: VillaReportData }) {
   const { rooms, expenses, shareholders, settings } = data;
 
+  const showCommission = rooms.some(
+    (r) => (r.status ?? "OCCUPIED") === "OCCUPIED" && parseDecimal(r.commission) > 0
+  );
   const summary = computeProfit(
-    rooms.map((r) => ({ rentAmount: r.rentAmount, paidAmount: r.paidAmount })),
+    rooms.map((r) => ({ rentAmount: r.rentAmount, paidAmount: r.paidAmount, commission: r.commission, status: r.status, carryIn: r.carryIn })),
     expenses.map((e) => ({ amount: e.amount })),
     shareholders
       .filter((vs) => vs?.shareholder)
@@ -362,302 +415,250 @@ export function VillaReportPDF({ data }: { data: VillaReportData }) {
 
   const isProfit = summary.netProfit >= 0;
   const monthLabel = `${MONTHS[data.month - 1]} ${data.year}`;
-  const collectionRate =
-    summary.totalRent > 0 ? Math.round((summary.totalCollected / summary.totalRent) * 100) : 0;
+  const collectionRate = summary.totalRent > 0
+    ? ((summary.totalCollected / summary.totalRent) * 100).toFixed(1)
+    : "0.0";
 
   return (
-    <Document
-      title={`${data.villaNumber} — ${monthLabel}`}
-      author={settings.companyName}
-    >
-      <Page size="A4" style={styles.page}>
-        <Header data={data} />
-        <View style={styles.divider} />
-        <View style={styles.dividerAccent} />
+    <Document title={`${data.villaNumber} — ${monthLabel}`} author={settings.companyName}>
+      <Page size="A4" style={S.page}>
+        <PageHeader data={data} />
 
-        {/* PROPERTY STRIP */}
-        <View style={styles.propertyStrip} wrap={false}>
-          <View>
-            <Text style={styles.propLabel}>PROPERTY</Text>
-            <Text style={styles.propValue}>{data.villaNumber}</Text>
-          </View>
-          <View style={styles.propDivider} />
-          <View>
-            <Text style={styles.propLabel}>ADDRESS</Text>
-            <Text style={styles.propMeta}>{data.address}</Text>
-          </View>
-          <View style={styles.propDivider} />
-          <View>
-            <Text style={styles.propLabel}>ROOMS</Text>
-            <Text style={styles.propMeta}>{rooms.length} rooms</Text>
-          </View>
-          <View style={styles.propDivider} />
-          <View>
-            <Text style={styles.propLabel}>COLLECTION</Text>
-            <Text style={styles.propMeta}>{collectionRate}%</Text>
-          </View>
-        </View>
-
-        {/* HERO KPI */}
-        <View style={isProfit ? styles.heroProfit : styles.heroLoss} wrap={false}>
-          <Text
-            style={[
-              styles.heroLabel,
-              { color: isProfit ? palette.green : palette.red },
-            ]}
-          >
-            {isProfit ? "NET PROFIT" : "NET LOSS"} — {monthLabel.toUpperCase()}
-          </Text>
-          <Text
-            style={[
-              styles.heroValue,
-              { color: isProfit ? palette.green : palette.red },
-            ]}
-          >
-            {qar(summary.netProfit)}
-          </Text>
-          <Text style={styles.heroSub}>
-            Realized profit = collected rent − total expenses
-          </Text>
-        </View>
-
-        {/* KPI TILES */}
-        <View style={styles.kpiRow} wrap={false}>
-          <View style={styles.kpiTile}>
-            <Text style={styles.kpiLabel}>RENT EXPECTED</Text>
-            <Text style={styles.kpiValue}>{qar(summary.totalRent)}</Text>
-          </View>
-          <View style={styles.kpiTile}>
-            <Text style={styles.kpiLabel}>COLLECTED</Text>
-            <Text style={[styles.kpiValue, { color: palette.green }]}>{qar(summary.totalCollected)}</Text>
-          </View>
-          <View style={styles.kpiTile}>
-            <Text style={styles.kpiLabel}>OUTSTANDING</Text>
-            <Text
-              style={[
-                styles.kpiValue,
-                { color: summary.totalDue > 0 ? palette.amber : palette.subtle },
-              ]}
-            >
-              {qar(summary.totalDue)}
-            </Text>
-          </View>
-          <View style={styles.kpiTile}>
-            <Text style={styles.kpiLabel}>EXPENSES</Text>
-            <Text style={[styles.kpiValue, { color: palette.red }]}>{qar(summary.totalExpenses)}</Text>
-          </View>
-        </View>
-
-        {/* ROOMS TABLE — rows can wrap to next page individually */}
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionBar} />
-          <Text style={styles.sectionTitle}>RENT COLLECTION</Text>
-          <Text style={styles.sectionCount}>{rooms.length} room{rooms.length === 1 ? "" : "s"}</Text>
-        </View>
-        <View style={styles.table}>
-          <View style={styles.tableHeader} fixed>
-            <Text style={[styles.tableHeaderCell, { flex: 1 }]}>ROOM</Text>
-            <Text style={[styles.tableHeaderCell, { flex: 1.2, textAlign: "right" }]}>RENT</Text>
-            <Text style={[styles.tableHeaderCell, { flex: 1.2, textAlign: "right" }]}>PAID</Text>
-            <Text style={[styles.tableHeaderCell, { flex: 1.2, textAlign: "right" }]}>DUE</Text>
-          </View>
-          {rooms.map((r, i) => {
-            const rent = parseDecimal(r.rentAmount);
-            const paid = parseDecimal(r.paidAmount);
-            const due = rent - paid;
-            return (
-              <View
-                key={r.id}
-                style={[styles.tableRow, i % 2 === 1 ? styles.tableRowAlt : {}]}
-                wrap={false}
-              >
-                <Text style={[styles.cell, styles.bold]}>{r.roomNumber}</Text>
-                <Text style={styles.cellRight}>{qar(rent)}</Text>
-                <Text style={[styles.cellRight, { color: palette.green }]}>{qar(paid)}</Text>
-                <Text
-                  style={[
-                    styles.cellRight,
-                    { color: due > 0 ? palette.red : palette.subtle, fontFamily: "Helvetica-Bold" },
-                  ]}
-                >
-                  {qar(due)}
-                </Text>
-              </View>
-            );
-          })}
-          <View style={styles.tableFooter} wrap={false}>
-            <Text style={[styles.cell, styles.bold]}>TOTAL</Text>
-            <Text style={[styles.cellRight, styles.bold]}>{qar(summary.totalRent)}</Text>
-            <Text style={[styles.cellRight, styles.bold, { color: palette.green }]}>
-              {qar(summary.totalCollected)}
-            </Text>
-            <Text
-              style={[
-                styles.cellRight,
-                styles.bold,
-                { color: summary.totalDue > 0 ? palette.red : palette.subtle },
-              ]}
-            >
-              {qar(summary.totalDue)}
-            </Text>
-          </View>
-        </View>
-
-        {/* EXPENSES — keep entire block together on one page */}
-        <View wrap={false}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionBar} />
-            <Text style={styles.sectionTitle}>EXPENSES</Text>
-            <Text style={styles.sectionCount}>
-              {expenses.length} {expenses.length === 1 ? "entry" : "entries"}
-            </Text>
-          </View>
-          <View style={styles.table}>
-            <View style={styles.tableHeader}>
-              <Text style={[styles.tableHeaderCell, { flex: 4 }]}>DESCRIPTION</Text>
-              <Text style={[styles.tableHeaderCell, { flex: 1.4, textAlign: "right" }]}>AMOUNT</Text>
+        <View style={S.content}>
+          {/* Property strip */}
+          <View style={S.strip} wrap={false}>
+            <View style={S.stripItem}>
+              <Text style={S.stripLabel}>PROPERTY</Text>
+              <Text style={S.stripValue}>{data.villaNumber}</Text>
             </View>
-            {expenses.length === 0 ? (
-              <View style={styles.tableRow}>
-                <Text style={{ flex: 1, fontSize: 9, color: palette.subtle, fontStyle: "italic" }}>
-                  No expenses recorded for this period
-                </Text>
-              </View>
-            ) : (
-              expenses.map((e, i) => (
-                <View
-                  key={e.id}
-                  style={[styles.tableRow, i % 2 === 1 ? styles.tableRowAlt : {}]}
-                >
-                  <Text style={{ flex: 4, fontSize: 9 }}>{e.description}</Text>
-                  <Text
-                    style={[
-                      styles.cellRight,
-                      { flex: 1.4, color: palette.red, fontFamily: "Helvetica-Bold" },
-                    ]}
-                  >
-                    {qar(parseDecimal(e.amount))}
-                  </Text>
-                </View>
-              ))
-            )}
-            <View style={styles.tableFooter}>
-              <Text style={[{ flex: 4, fontSize: 9 }, styles.bold]}>TOTAL EXPENSES</Text>
-              <Text
-                style={[
-                  styles.cellRight,
-                  styles.bold,
-                  { flex: 1.4, color: palette.red },
-                ]}
-              >
+            <View style={S.stripDivider} />
+            <View style={[S.stripItem, { flex: 3 }]}>
+              <Text style={S.stripLabel}>ADDRESS</Text>
+              <Text style={S.stripSub}>{data.address}</Text>
+            </View>
+            <View style={S.stripDivider} />
+            <View style={S.stripItem}>
+              <Text style={S.stripLabel}>ROOMS</Text>
+              <Text style={S.stripValue}>{rooms.length}</Text>
+            </View>
+            <View style={S.stripDivider} />
+            <View style={S.stripItem}>
+              <Text style={S.stripLabel}>COLLECTION</Text>
+              <Text style={[S.stripValue, { color: Number(collectionRate) >= 80 ? P.green : P.amber }]}>
+                {collectionRate}%
+              </Text>
+            </View>
+          </View>
+
+          {/* Hero */}
+          <View style={isProfit ? S.heroProfitBand : S.heroLossBand} wrap={false}>
+            <View style={{ flex: 1 }}>
+              <Text style={[S.heroLabel, { color: isProfit ? P.green : P.red }]}>
+                {isProfit ? "NET PROFIT" : "NET LOSS"} — {monthLabel.toUpperCase()}
+              </Text>
+              <Text style={[S.heroValue, { color: isProfit ? P.green : P.red }]}>
+                {qar(summary.netProfit)}
+              </Text>
+              <Text style={S.heroNote}>Realized = collected rent − total expenses</Text>
+            </View>
+            <View style={{ alignItems: "flex-end" }}>
+              <Text style={[S.heroLabel, { color: P.muted, letterSpacing: 1.2 }]}>PERIOD</Text>
+              <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: P.body, marginTop: 3 }}>
+                {monthLabel}
+              </Text>
+            </View>
+          </View>
+
+          {/* KPI row */}
+          <View style={S.kpiRow} wrap={false}>
+            <View style={[S.kpiTile, { borderColor: P.border, backgroundColor: P.bgSoft }]}>
+              <Text style={S.kpiLabel}>RENT EXPECTED</Text>
+              <Text style={[S.kpiValue, { color: P.ink }]}>{qar(summary.totalRent)}</Text>
+            </View>
+            <View style={[S.kpiTile, { borderColor: P.greenBorder, backgroundColor: P.greenBg }]}>
+              <Text style={[S.kpiLabel, { color: P.green }]}>COLLECTED</Text>
+              <Text style={[S.kpiValue, { color: P.green }]}>{qar(summary.totalCollected)}</Text>
+            </View>
+            <View style={[S.kpiTile, { borderColor: summary.totalDue > 0 ? P.redBorder : P.border, backgroundColor: summary.totalDue > 0 ? P.redBg : P.bgSoft }]}>
+              <Text style={[S.kpiLabel, { color: summary.totalDue > 0 ? P.red : P.muted }]}>OUTSTANDING</Text>
+              <Text style={[S.kpiValue, { color: summary.totalDue > 0 ? P.red : P.subtle }]}>
+                {qar(summary.totalDue)}
+              </Text>
+            </View>
+            <View style={[S.kpiTile, { borderColor: summary.totalExpenses > 0 ? P.redBorder : P.border, backgroundColor: summary.totalExpenses > 0 ? P.redBg : P.bgSoft }]}>
+              <Text style={[S.kpiLabel, { color: summary.totalExpenses > 0 ? P.red : P.muted }]}>EXPENSES</Text>
+              <Text style={[S.kpiValue, { color: summary.totalExpenses > 0 ? P.red : P.subtle }]}>
                 {qar(summary.totalExpenses)}
               </Text>
             </View>
           </View>
-        </View>
 
-        {/* PROFIT BREAKDOWN — keep together */}
-        <View wrap={false}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionBar} />
-            <Text style={styles.sectionTitle}>PROFIT CALCULATION</Text>
-          </View>
-          <View style={styles.breakdown}>
-            <View style={styles.breakdownRow}>
-              <Text style={styles.breakdownLabel}>Total rent expected</Text>
-              <Text style={styles.breakdownValue}>{qar(summary.totalRent)}</Text>
-            </View>
-            <View style={styles.breakdownRow}>
-              <Text style={styles.breakdownLabel}>Total collected</Text>
-              <Text style={[styles.breakdownValue, { color: palette.green }]}>
-                {qar(summary.totalCollected)}
-              </Text>
-            </View>
-            <View style={styles.breakdownRow}>
-              <Text style={styles.breakdownLabel}>Outstanding (unpaid)</Text>
-              <Text
-                style={[
-                  styles.breakdownValue,
-                  { color: summary.totalDue > 0 ? palette.amber : palette.subtle },
-                ]}
-              >
-                {qar(summary.totalDue)}
-              </Text>
-            </View>
-            <View style={[styles.breakdownRow, styles.breakdownLast]}>
-              <Text style={styles.breakdownLabel}>Less: total expenses</Text>
-              <Text style={[styles.breakdownValue, { color: palette.red }]}>
-                −{qar(summary.totalExpenses)}
-              </Text>
-            </View>
-            <View style={styles.breakdownTotal}>
-              <Text style={[styles.breakdownLabel, { color: palette.ink, fontFamily: "Helvetica-Bold" }]}>
-                {isProfit ? "NET PROFIT" : "NET LOSS"}
-              </Text>
-              <Text
-                style={[
-                  styles.breakdownValue,
-                  { fontSize: 12, color: isProfit ? palette.green : palette.red },
-                ]}
-              >
-                {qar(summary.netProfit)}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* SHAREHOLDER DISTRIBUTION — keep together */}
-        {summary.shareholderSplits.length > 0 && (
-          <View wrap={false}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionBar} />
-              <Text style={styles.sectionTitle}>SHAREHOLDER DISTRIBUTION</Text>
-              <Text style={styles.sectionCount}>
-                {summary.shareholderSplits.length} shareholder
-                {summary.shareholderSplits.length === 1 ? "" : "s"}
-              </Text>
-            </View>
-            <View style={styles.table}>
-              <View style={styles.tableHeader}>
-                <Text style={[styles.tableHeaderCell, { flex: 3 }]}>SHAREHOLDER</Text>
-                <Text style={[styles.tableHeaderCell, { flex: 1, textAlign: "center" }]}>SHARE</Text>
-                <Text style={[styles.tableHeaderCell, { flex: 1.4, textAlign: "right" }]}>AMOUNT</Text>
+          {/* Two-column body — rooms left, summaries right */}
+          <View style={S.twoCol}>
+            {/* LEFT — rent collection */}
+            <View style={showCommission ? S.colLeftWide : S.colLeft}>
+              <View style={S.sectionHead}>
+                <View style={S.sectionBar} />
+                <Text style={S.sectionTitle}>RENT COLLECTION</Text>
+                <Text style={S.sectionCount}>{rooms.length}</Text>
               </View>
-              {summary.shareholderSplits.map((s, i) => (
-                <View
-                  key={s.id}
-                  style={[styles.tableRow, i % 2 === 1 ? styles.tableRowAlt : {}]}
-                >
-                  <Text style={[{ flex: 3, fontSize: 9 }, styles.bold]}>{s.name}</Text>
-                  <Text
-                    style={{
-                      flex: 1,
-                      fontSize: 9,
-                      textAlign: "center",
-                      color: palette.muted,
-                    }}
-                  >
-                    {s.percentage}%
-                  </Text>
-                  <Text
-                    style={[
-                      styles.cellRight,
-                      styles.bold,
-                      {
-                        flex: 1.4,
-                        color: s.amount >= 0 ? palette.green : palette.red,
-                      },
-                    ]}
-                  >
-                    {qar(s.amount)}
+              <View style={S.table}>
+                <View style={S.tHead}>
+                  <Text style={[S.tHeadCell, { flex: 1 }]}>ROOM</Text>
+                  <Text style={[S.tHeadCell, { flex: 1.4, textAlign: "right" }]}>PAID</Text>
+                  {showCommission && (
+                    <Text style={[S.tHeadCell, { flex: 1.4, textAlign: "right", color: "#FCD34D" }]}>COMM.</Text>
+                  )}
+                  <Text style={[S.tHeadCell, { flex: 1.4, textAlign: "right" }]}>DUE</Text>
+                </View>
+                {rooms.map((r, i) => {
+                  const status = r.status ?? "OCCUPIED";
+                  if (status !== "OCCUPIED") {
+                    // Empty / sold — show the word in the PAID column
+                    const wordColor = status === "EMPTY" ? P.amber : P.muted;
+                    return (
+                      <View key={r.id} style={[S.tRow, i % 2 === 1 ? S.tRowAlt : {}]} wrap={false}>
+                        <Text style={[S.cell, S.bold]}>{r.roomNumber}</Text>
+                        <Text style={[S.cellR, S.bold, { flex: 1.4, color: wordColor, letterSpacing: 1 }]}>{status}</Text>
+                        {showCommission && <Text style={[S.cellR, { flex: 1.4, color: P.subtle }]}>—</Text>}
+                        <Text style={[S.cellR, { flex: 1.4, color: P.subtle }]}>—</Text>
+                      </View>
+                    );
+                  }
+                  const rent = parseDecimal(r.rentAmount) + (r.carryIn ?? 0);
+                  const paid = parseDecimal(r.paidAmount);
+                  const commission = parseDecimal(r.commission);
+                  const due = rent - paid - commission;
+                  return (
+                    <View key={r.id} style={[S.tRow, i % 2 === 1 ? S.tRowAlt : {}]} wrap={false}>
+                      <Text style={[S.cell, S.bold]}>{r.roomNumber}</Text>
+                      <Text style={[S.cellR, { flex: 1.4, color: P.green, fontFamily: "Helvetica-Bold" }]}>{qar(paid)}</Text>
+                      {showCommission && (
+                        <Text style={[S.cellR, { flex: 1.4, color: commission > 0 ? P.amber : P.subtle }]}>
+                          {commission > 0 ? qar(commission) : "—"}
+                        </Text>
+                      )}
+                      <Text style={[S.cellR, { flex: 1.4, color: due > 0 ? P.red : P.subtle, fontFamily: "Helvetica-Bold" }]}>
+                        {qar(due)}
+                      </Text>
+                    </View>
+                  );
+                })}
+                <View style={S.tFoot} wrap={false}>
+                  <Text style={[S.cell, S.bold]}>TOTAL</Text>
+                  <Text style={[S.cellR, S.bold, { flex: 1.4, color: P.green }]}>{qar(summary.totalCollected)}</Text>
+                  {showCommission && (
+                    <Text style={[S.cellR, S.bold, { flex: 1.4, color: P.amber }]}>{qar(summary.totalCommission)}</Text>
+                  )}
+                  <Text style={[S.cellR, S.bold, { flex: 1.4, color: summary.totalDue > 0 ? P.red : P.subtle }]}>
+                    {qar(summary.totalDue)}
                   </Text>
                 </View>
-              ))}
+              </View>
+            </View>
+
+            {/* RIGHT — expenses, profit, shareholders */}
+            <View style={showCommission ? S.colRightNarrow : S.colRight}>
+              {/* Expenses */}
+              <View wrap={false}>
+                <View style={S.sectionHead}>
+                  <View style={S.sectionBar} />
+                  <Text style={S.sectionTitle}>EXPENSES</Text>
+                  <Text style={S.sectionCount}>{expenses.length}</Text>
+                </View>
+                <View style={S.table}>
+                  <View style={S.tHead}>
+                    <Text style={[S.tHeadCell, { flex: 3 }]}>DESCRIPTION</Text>
+                    <Text style={[S.tHeadCell, { flex: 1.6, textAlign: "right" }]}>AMOUNT (QAR)</Text>
+                  </View>
+                  {expenses.length === 0 ? (
+                    <View style={S.tRow}>
+                      <Text style={[S.cell, S.italic, { color: P.subtle }]}>No expenses this period</Text>
+                    </View>
+                  ) : (
+                    expenses.map((e, i) => (
+                      <View key={e.id} style={[S.tRow, i % 2 === 1 ? S.tRowAlt : {}]} wrap={false}>
+                        <Text style={{ flex: 3, fontSize: 8 }}>{e.description}</Text>
+                        <Text style={[S.cellR, { flex: 1.6, color: P.red, fontFamily: "Helvetica-Bold" }]}>
+                          {qar(parseDecimal(e.amount))}
+                        </Text>
+                      </View>
+                    ))
+                  )}
+                  <View style={S.tFoot}>
+                    <Text style={[{ flex: 3, fontSize: 8 }, S.bold]}>TOTAL</Text>
+                    <Text style={[S.cellR, S.bold, { flex: 1.6, color: P.red }]}>{qar(summary.totalExpenses)}</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Profit breakdown */}
+              <View wrap={false}>
+                <View style={S.sectionHead}>
+                  <View style={S.sectionBar} />
+                  <Text style={S.sectionTitle}>PROFIT CALCULATION</Text>
+                </View>
+                <View style={S.breakdown}>
+                  <View style={S.bRow}>
+                    <Text style={S.bLabel}>Total rent expected</Text>
+                    <Text style={S.bValue}>{qar(summary.totalRent)}</Text>
+                  </View>
+                  {showCommission && (
+                    <View style={S.bRow}>
+                      <Text style={S.bLabel}>Less: commission</Text>
+                      <Text style={[S.bValue, { color: P.amber }]}>−{qar(summary.totalCommission)}</Text>
+                    </View>
+                  )}
+                  <View style={S.bRow}>
+                    <Text style={S.bLabel}>Total collected</Text>
+                    <Text style={[S.bValue, { color: P.green }]}>{qar(summary.totalCollected)}</Text>
+                  </View>
+                  <View style={[S.bRow, { borderBottomWidth: 0 }]}>
+                    <Text style={S.bLabel}>Less: total expenses</Text>
+                    <Text style={[S.bValue, { color: P.red }]}>−{qar(summary.totalExpenses)}</Text>
+                  </View>
+                  <View style={S.bTotalRow}>
+                    <Text style={S.bTotalLabel}>{isProfit ? "NET PROFIT" : "NET LOSS"}</Text>
+                    <Text style={[S.bTotalValue, { color: isProfit ? "#6EE7B7" : "#FCA5A5" }]}>
+                      {qar(summary.netProfit)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Shareholder distribution */}
+              {summary.shareholderSplits.length > 0 && (
+                <View wrap={false}>
+                  <View style={S.sectionHead}>
+                    <View style={S.sectionBar} />
+                    <Text style={S.sectionTitle}>SHAREHOLDERS</Text>
+                    <Text style={S.sectionCount}>{summary.shareholderSplits.length}</Text>
+                  </View>
+                  <View style={S.table}>
+                    <View style={S.tHead}>
+                      <Text style={[S.tHeadCell, { flex: 3 }]}>SHAREHOLDER</Text>
+                      <Text style={[S.tHeadCell, { flex: 1, textAlign: "center" }]}>%</Text>
+                      <Text style={[S.tHeadCell, { flex: 1.8, textAlign: "right" }]}>AMOUNT (QAR)</Text>
+                    </View>
+                    {summary.shareholderSplits.map((s, i) => (
+                      <View key={s.id} style={[S.tRow, i % 2 === 1 ? S.tRowAlt : {}]} wrap={false}>
+                        <Text style={[{ flex: 3, fontSize: 8.5 }, S.bold]}>{s.name}</Text>
+                        <Text style={{ flex: 1, fontSize: 8.5, textAlign: "center", color: P.muted }}>
+                          {s.percentage}%
+                        </Text>
+                        <Text style={[S.cellR, S.bold, { flex: 1.8, color: s.amount >= 0 ? P.green : P.red, fontSize: 8.5 }]}>
+                          {qar(s.amount)}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
             </View>
           </View>
-        )}
+        </View>
 
-        <Footer companyName={settings.companyName} />
+        <PageFooter companyName={settings.companyName} />
       </Page>
     </Document>
   );

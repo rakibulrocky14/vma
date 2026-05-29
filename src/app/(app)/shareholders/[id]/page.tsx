@@ -19,6 +19,16 @@ interface VillaEarning {
   earnings: number;
 }
 
+interface SourceEarning {
+  shareId: string;
+  sourceName: string;
+  propertyName: string;
+  myShareOwnerPercent: number; // entry.mySharePercent
+  sharePercent: number;          // their % of owner's cut
+  profit: number;
+  earnings: number;
+}
+
 export default function ShareholderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
@@ -104,8 +114,42 @@ export default function ShareholderDetailPage() {
     }
   );
 
-  const totalEarnings = villaEarnings.reduce((sum, ve) => sum + ve.earnings, 0);
+  const sourceEarnings: SourceEarning[] = (shareholder.incomeSourceShares ?? []).map(
+    (share: {
+      id: string;
+      sharePercent: unknown;
+      entry: {
+        propertyName: string;
+        mySharePercent: unknown;
+        incomeSource: { name: string };
+        records?: { year: number; month: number; profit: unknown }[];
+      };
+    }) => {
+      const sharePercent = parseDecimal(share.sharePercent);
+      const ownerPct = parseDecimal(share.entry.mySharePercent);
+      const rec = (share.entry.records ?? []).find(
+        (r) => r.year === currentYear && r.month === currentMonth
+      );
+      const profit = rec ? parseDecimal(rec.profit) : 0;
+      const myCut = (profit * ownerPct) / 100;
+      const earnings = (myCut * sharePercent) / 100;
+      return {
+        shareId: share.id,
+        sourceName: share.entry.incomeSource.name,
+        propertyName: share.entry.propertyName,
+        myShareOwnerPercent: ownerPct,
+        sharePercent,
+        profit,
+        earnings,
+      };
+    }
+  );
+
+  const totalVillaEarnings = villaEarnings.reduce((sum, ve) => sum + ve.earnings, 0);
+  const totalSourceEarnings = sourceEarnings.reduce((sum, se) => sum + se.earnings, 0);
+  const totalEarnings = totalVillaEarnings + totalSourceEarnings;
   const earningPositive = totalEarnings >= 0;
+  const totalEntries = villaEarnings.length + sourceEarnings.length;
 
   return (
     <div className="min-h-full bg-[#faf7f1]">
@@ -251,8 +295,10 @@ export default function ShareholderDetailPage() {
                 {formatQAR(totalEarnings)}
               </p>
               <p className="text-[12px] sm:text-[12.5px] text-slate-600 mt-1">
-                Across {villaEarnings.length}{" "}
-                {villaEarnings.length === 1 ? "property" : "properties"}
+                Across {totalEntries} {totalEntries === 1 ? "property" : "properties"}
+                {sourceEarnings.length > 0 && villaEarnings.length > 0 && (
+                  <> · {villaEarnings.length} villa{villaEarnings.length === 1 ? "" : "s"} + {sourceEarnings.length} source{sourceEarnings.length === 1 ? "" : "s"}</>
+                )}
               </p>
             </div>
             <div
@@ -315,22 +361,112 @@ export default function ShareholderDetailPage() {
           )}
 
           {villaEarnings.length > 0 && (
-            <div className="bg-amber-50/50 px-4 sm:px-5 py-3.5 border-t-2 border-slate-900 flex items-center justify-between">
+            <div className="bg-amber-50/50 px-4 sm:px-5 py-3.5 border-t border-slate-200 flex items-center justify-between">
               <span className="text-[12px] uppercase tracking-wider font-bold text-slate-700">
-                Total
+                Villa total
               </span>
               <span
                 className={
                   "font-mono tabular-nums font-bold text-[16px] " +
-                  (earningPositive ? "text-emerald-700" : "text-red-700")
+                  (totalVillaEarnings >= 0 ? "text-emerald-700" : "text-red-700")
                 }
               >
-                {formatQAR(totalEarnings)}
+                {formatQAR(totalVillaEarnings)}
               </span>
             </div>
           )}
         </div>
+
+        {/* Income source earnings */}
+        {sourceEarnings.length > 0 && (
+          <div className="rounded-xl bg-white border border-slate-200/80 shadow-card overflow-hidden mt-5 sm:mt-6">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+              <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-700">
+                External income shares
+              </p>
+              <p className="text-[11px] text-slate-500">{sourceEarnings.length} {sourceEarnings.length === 1 ? "property" : "properties"}</p>
+            </div>
+
+            <div className="divide-y divide-slate-100">
+              {sourceEarnings.map((se) => (
+                <div
+                  key={se.shareId}
+                  className="flex items-center justify-between px-4 sm:px-5 py-3.5 min-h-[60px]"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="flex h-9 w-9 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-md bg-emerald-100 text-emerald-700">
+                      <TrendingUp className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[14px] sm:text-[13.5px] font-semibold text-slate-900 truncate">
+                        {se.propertyName}
+                      </p>
+                      <p className="text-[11px] text-slate-500 truncate">
+                        From <span className="font-semibold">{se.sourceName}</span> · {pct(se.sharePercent)} of their cut
+                      </p>
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p
+                      className={
+                        "font-mono tabular-nums font-semibold text-[14px] " +
+                        (se.earnings >= 0 ? "text-emerald-700" : "text-red-700")
+                      }
+                    >
+                      {formatQAR(se.earnings)}
+                    </p>
+                    {se.profit > 0 && (
+                      <p className="text-[10.5px] text-slate-400 tabular-nums mt-0.5">
+                        from {formatQAR(se.profit)} profit
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-emerald-50/50 px-4 sm:px-5 py-3.5 border-t border-slate-200 flex items-center justify-between">
+              <span className="text-[12px] uppercase tracking-wider font-bold text-slate-700">
+                Source total
+              </span>
+              <span
+                className={
+                  "font-mono tabular-nums font-bold text-[16px] " +
+                  (totalSourceEarnings >= 0 ? "text-emerald-700" : "text-red-700")
+                }
+              >
+                {formatQAR(totalSourceEarnings)}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Grand total */}
+        {(villaEarnings.length > 0 || sourceEarnings.length > 0) && (
+          <div className="mt-5 sm:mt-6 rounded-xl bg-slate-950 px-5 sm:px-6 py-4 sm:py-5 flex items-center justify-between text-white">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-amber-400">
+                Grand total · {monthLabel}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Villas + income source shares combined
+              </p>
+            </div>
+            <span
+              className={
+                "font-mono tabular-nums font-bold text-[20px] sm:text-[24px] " +
+                (earningPositive ? "text-emerald-400" : "text-red-400")
+              }
+            >
+              {formatQAR(totalEarnings)}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
+}
+
+function pct(n: number) {
+  return `${Number(n).toFixed(2)}%`;
 }

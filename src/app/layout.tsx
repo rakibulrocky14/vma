@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Fraunces, JetBrains_Mono } from "next/font/google";
 import { QueryProvider } from "@/providers/QueryProvider";
+import { PWARegister } from "@/components/PWARegister";
 import "./globals.css";
 
 const inter = Inter({
@@ -28,6 +29,11 @@ export const metadata: Metadata = {
   description: "Manage villas, rents, expenses, and shareholders.",
   applicationName: "Villa Management",
   formatDetection: { telephone: false },
+  appleWebApp: {
+    capable: true,
+    title: "VMA",
+    statusBarStyle: "default",
+  },
 };
 
 export const viewport: Viewport = {
@@ -48,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${inter.variable} ${fraunces.variable} ${jetbrains.variable} h-full`}
     >
       <body className="h-full antialiased">
+        <PWARegister />
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

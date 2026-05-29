@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { sortRooms } from "@/lib/utils";
+import { sumCarryIns } from "@/lib/calculations";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request) {
@@ -25,17 +26,34 @@ export async function GET(req: Request) {
   }
 
   const isAdmin = session.user.role === "ADMIN";
-  const villas = await prisma.villa.findMany({
-    where: isAdmin ? {} : { ownerId: session.user.id },
-    include: {
-      rooms: { include: { records: { where: { year, month } } } },
-      expenses: { where: { year, month } },
-      shareholders: { include: { shareholder: true } },
-      monthlyBooks: { where: { year, month } },
-    },
-  });
+  const [villas, priorRecords] = await Promise.all([
+    prisma.villa.findMany({
+      where: isAdmin ? {} : { ownerId: session.user.id },
+      include: {
+        rooms: { include: { records: { where: { year, month } } } },
+        expenses: { where: { year, month } },
+        shareholders: { include: { shareholder: true } },
+        monthlyBooks: { where: { year, month } },
+      },
+    }),
+    prisma.roomMonthlyRecord.findMany({
+      where: {
+        room: isAdmin ? {} : { villa: { ownerId: session.user.id } },
+        OR: [{ year: { lt: year } }, { year, month: { lt: month } }],
+      },
+      select: { roomId: true, rentAmount: true, paidAmount: true, commission: true },
+    }),
+  ]);
+
+  const carryIns = sumCarryIns(priorRecords);
 
   return NextResponse.json(
-    villas.map((v) => ({ ...v, rooms: sortRooms(v.rooms) }))
+    villas.map((v) => ({
+      ...v,
+      rooms: sortRooms(v.rooms).map((r) => ({
+        ...r,
+        carryIn: Math.max(0, carryIns[r.id] ?? 0),
+      })),
+    }))
   );
 }

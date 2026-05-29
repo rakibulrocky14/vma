@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { sortRooms } from "@/lib/utils";
+import { sumCarryIns } from "@/lib/calculations";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -18,18 +19,35 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const year = parseInt(searchParams.get("year") ?? String(now.getFullYear()));
   const month = parseInt(searchParams.get("month") ?? String(now.getMonth() + 1));
 
-  const villa = await prisma.villa.findFirst({
-    where: villaWhere(id, session.user.id, session.user.role as string),
-    include: {
-      rooms: { include: { records: { where: { year, month } } } },
-      shareholders: { include: { shareholder: true } },
-      expenses: { where: { year, month }, orderBy: { createdAt: "asc" } },
-      monthlyBooks: { where: { year, month } },
-    },
-  });
+  const [villa, priorRecords] = await Promise.all([
+    prisma.villa.findFirst({
+      where: villaWhere(id, session.user.id, session.user.role as string),
+      include: {
+        rooms: { include: { records: { where: { year, month } } } },
+        shareholders: { include: { shareholder: true } },
+        expenses: { where: { year, month }, orderBy: { createdAt: "asc" } },
+        monthlyBooks: { where: { year, month } },
+      },
+    }),
+    // All records BEFORE the selected month — for unpaid carry-forward
+    prisma.roomMonthlyRecord.findMany({
+      where: {
+        room: { villaId: id },
+        OR: [{ year: { lt: year } }, { year, month: { lt: month } }],
+      },
+      select: { roomId: true, rentAmount: true, paidAmount: true, commission: true },
+    }),
+  ]);
 
   if (!villa) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ ...villa, rooms: sortRooms(villa.rooms) });
+
+  const carryIns = sumCarryIns(priorRecords);
+  const rooms = sortRooms(villa.rooms).map((r) => ({
+    ...r,
+    carryIn: Math.max(0, carryIns[r.id] ?? 0), // only positive balances carry
+  }));
+
+  return NextResponse.json({ ...villa, rooms });
 }
 
 const UpdateVillaSchema = z.object({

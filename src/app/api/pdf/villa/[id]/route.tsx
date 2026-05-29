@@ -1,6 +1,8 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { sortRooms } from "@/lib/utils";
+import { sumCarryIns } from "@/lib/calculations";
+import { getLogoDataUri } from "@/lib/pdf-logo";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { VillaReportPDF } from "@/components/pdf/VillaReportPDF";
 import { NextResponse } from "next/server";
@@ -14,7 +16,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const year = parseInt(searchParams.get("year") ?? String(new Date().getFullYear()));
   const month = parseInt(searchParams.get("month") ?? String(new Date().getMonth() + 1));
 
-  const [villa, settings] = await Promise.all([
+  const [villa, settings, priorRecords] = await Promise.all([
     prisma.villa.findFirst({
       where: { id, ownerId: session.user.id },
       include: {
@@ -24,10 +26,18 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       },
     }),
     prisma.settings.findUnique({ where: { id: "singleton" } }),
+    prisma.roomMonthlyRecord.findMany({
+      where: {
+        room: { villaId: id },
+        OR: [{ year: { lt: year } }, { year, month: { lt: month } }],
+      },
+      select: { roomId: true, rentAmount: true, paidAmount: true, commission: true },
+    }),
   ]);
 
   if (!villa) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  const carryIns = sumCarryIns(priorRecords);
   const sortedRooms = sortRooms(villa.rooms);
 
   const data = {
@@ -40,6 +50,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       roomNumber: r.roomNumber,
       rentAmount: r.records[0]?.rentAmount ?? 0,
       paidAmount: r.records[0]?.paidAmount ?? 0,
+      commission: r.records[0]?.commission ?? 0,
+      status: r.records[0]?.status ?? "OCCUPIED",
+      carryIn: Math.max(0, carryIns[r.id] ?? 0),
     })),
     expenses: villa.expenses.map((e) => ({
       id: e.id,
@@ -52,9 +65,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     })),
     settings: {
       companyName: settings?.companyName ?? "Villa Management",
-      logoUrl: settings?.logoUrl
-        ? `${process.env.NEXTAUTH_URL ?? "http://localhost:3000"}${settings.logoUrl}`
-        : null,
+      logoUrl: getLogoDataUri(settings?.logoUrl),
       address: settings?.address ?? null,
     },
   };

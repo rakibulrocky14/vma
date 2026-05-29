@@ -7,216 +7,268 @@ import {
   Image,
 } from "@react-pdf/renderer";
 
-const palette = {
-  ink: "#0f172a",
-  body: "#1e293b",
-  muted: "#64748b",
-  subtle: "#94a3b8",
-  border: "#e2e8f0",
-  hairline: "#f1f5f9",
-  bgSoft: "#f8fafc",
-  navy: "#1e3a8a",
-  gold: "#b45309",
-  goldBg: "#fef3c7",
-  green: "#047857",
-  greenBg: "#ecfdf5",
-  red: "#b91c1c",
-  redBg: "#fef2f2",
-  amber: "#d97706",
-  blue: "#1d4ed8",
+const P = {
+  deepInk: "#0B1120",
+  ink: "#0F172A",
+  body: "#1E293B",
+  muted: "#64748B",
+  subtle: "#94A3B8",
+  border: "#E2E8F0",
+  hairline: "#F1F5F9",
+  bgSoft: "#F8FAFC",
+  gold: "#C8960C",
+  goldStripe: "#D4A017",
+  goldBg: "#FFFBEB",
+  goldBorder: "#FDE68A",
+  green: "#065F46",
+  greenBg: "#ECFDF5",
+  greenBorder: "#6EE7B7",
+  red: "#991B1B",
+  redBg: "#FEF2F2",
+  redBorder: "#FECACA",
+  amber: "#B45309",
+  blue: "#1E3A8A",
+  blueMid: "#1D4ED8",
+  blueBg: "#EFF6FF",
+  blueBorder: "#BFDBFE",
+  white: "#FFFFFF",
+  navyHero: "#0F2952",
 };
 
-const styles = StyleSheet.create({
+const S = StyleSheet.create({
   page: {
     fontFamily: "Helvetica",
     fontSize: 8,
-    paddingTop: 28,
-    paddingBottom: 36,
-    paddingHorizontal: 32,
-    backgroundColor: "#ffffff",
-    color: palette.body,
+    paddingBottom: 52,
+    backgroundColor: P.white,
+    color: P.body,
   },
 
-  header: {
+  headerBand: {
+    backgroundColor: P.deepInk,
+    paddingTop: 18,
+    paddingBottom: 16,
+    paddingHorizontal: 36,
     flexDirection: "row",
-    alignItems: "flex-start",
+    alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 4,
   },
-  brand: { flexDirection: "row", alignItems: "center", gap: 8 },
-  logo: { width: 28, height: 28, objectFit: "contain" },
-  logoFallback: {
-    width: 28,
-    height: 28,
-    backgroundColor: palette.navy,
-    borderRadius: 3,
+  logoTile: {
+    width: 52,
+    height: 52,
+    borderRadius: 8,
+    backgroundColor: P.white,
     alignItems: "center",
     justifyContent: "center",
+    padding: 5,
   },
-  logoFallbackText: { color: "#ffffff", fontFamily: "Helvetica-Bold", fontSize: 12 },
-  companyName: { fontSize: 9.5, fontFamily: "Helvetica-Bold", color: palette.ink, letterSpacing: 0.4 },
-  companyAddress: { fontSize: 7, color: palette.muted, marginTop: 1 },
-  reportMeta: { alignItems: "flex-end" },
-  reportKicker: {
-    fontSize: 6.5,
+  logoImg: { width: "100%", height: "100%", objectFit: "contain" },
+  logoBoxText: { color: P.gold, fontFamily: "Helvetica-Bold", fontSize: 22 },
+  headerCenter: { flex: 1, alignItems: "center", paddingHorizontal: 12 },
+  headerSpacer: { width: 52 },
+  reportType: {
+    fontSize: 7,
     fontFamily: "Helvetica-Bold",
-    color: palette.gold,
-    letterSpacing: 1.4,
+    color: P.gold,
+    letterSpacing: 2.5,
+    marginBottom: 3,
+    textAlign: "center",
   },
   reportTitle: {
-    fontSize: 13,
+    fontSize: 21,
     fontFamily: "Helvetica-Bold",
-    color: palette.ink,
-    marginTop: 1,
+    color: P.white,
+    letterSpacing: -0.3,
+    textAlign: "center",
   },
   reportPeriod: {
-    fontSize: 8,
-    color: palette.muted,
-    marginTop: 0,
-  },
-  divider: {
-    height: 1.5,
-    backgroundColor: palette.ink,
-    marginTop: 8,
-    marginBottom: 10,
-  },
-  dividerAccent: {
-    height: 1.5,
-    width: 44,
-    backgroundColor: palette.gold,
-    marginTop: -1.5,
-    marginBottom: 10,
+    fontSize: 9,
+    color: "#CBD5E1",
+    marginTop: 3,
+    letterSpacing: 0.5,
+    textAlign: "center",
   },
 
-  /* PERSON STRIP */
+  goldStripe: {
+    height: 3,
+    backgroundColor: P.goldStripe,
+  },
+
+  content: {
+    paddingHorizontal: 36,
+    paddingTop: 16,
+  },
+
+  /* ── PERSON STRIP ── */
   personStrip: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    backgroundColor: palette.bgSoft,
-    borderRadius: 3,
-    marginBottom: 10,
     gap: 12,
+    borderWidth: 1,
+    borderColor: P.border,
+    borderStyle: "solid",
+    borderRadius: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    backgroundColor: P.bgSoft,
   },
   avatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: palette.navy,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: P.navyHero,
     alignItems: "center",
     justifyContent: "center",
   },
   avatarText: {
-    color: "#ffffff",
+    color: P.gold,
     fontFamily: "Helvetica-Bold",
-    fontSize: 13,
+    fontSize: 16,
   },
   personName: {
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: "Helvetica-Bold",
-    color: palette.ink,
+    color: P.ink,
   },
-  personContact: { fontSize: 7, color: palette.muted, marginTop: 1 },
+  personContact: { fontSize: 7.5, color: P.muted, marginTop: 2 },
 
-  /* HERO */
+  /* ── HERO ── */
   hero: {
-    backgroundColor: palette.navy,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    marginBottom: 12,
-    borderRadius: 3,
-  },
-  heroLabel: {
-    fontSize: 7,
-    fontFamily: "Helvetica-Bold",
-    color: "#cbd5e1",
-    letterSpacing: 1.4,
-  },
-  heroValue: {
-    fontSize: 22,
-    fontFamily: "Helvetica-Bold",
-    color: "#ffffff",
-    marginTop: 3,
-  },
-  heroSub: { fontSize: 7, color: "#94a3b8", marginTop: 2 },
-
-  sectionHeader: {
+    backgroundColor: P.navyHero,
+    borderRadius: 4,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 14,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginTop: 2,
-    marginBottom: 4,
+    justifyContent: "space-between",
   },
-  sectionBar: { width: 2.5, height: 10, backgroundColor: palette.gold },
+  heroLabel: {
+    fontSize: 6.5,
+    fontFamily: "Helvetica-Bold",
+    color: "#93C5FD",
+    letterSpacing: 1.8,
+    marginBottom: 3,
+  },
+  heroValue: {
+    fontSize: 24,
+    fontFamily: "Helvetica-Bold",
+    color: P.white,
+    letterSpacing: -0.5,
+  },
+  heroSub: { fontSize: 7.5, color: "#93C5FD", marginTop: 3 },
+
+  /* ── SECTION ── */
+  sectionHead: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    marginBottom: 5,
+    marginTop: 4,
+  },
+  sectionBar: {
+    width: 3,
+    height: 11,
+    backgroundColor: P.gold,
+    borderRadius: 2,
+  },
   sectionTitle: {
     fontSize: 8.5,
     fontFamily: "Helvetica-Bold",
-    color: palette.ink,
-    letterSpacing: 1.2,
+    color: P.ink,
+    letterSpacing: 1.4,
   },
   sectionCount: {
     fontSize: 7,
-    color: palette.muted,
+    color: P.muted,
     marginLeft: "auto",
   },
 
+  /* ── TABLE ── */
   table: {
     borderWidth: 1,
-    borderColor: palette.border,
+    borderColor: P.border,
     borderStyle: "solid",
-    borderRadius: 3,
+    borderRadius: 4,
     overflow: "hidden",
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  tableHeader: {
+  tHead: {
     flexDirection: "row",
-    backgroundColor: palette.ink,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    backgroundColor: P.ink,
+    paddingVertical: 5,
+    paddingHorizontal: 9,
   },
-  tableHeaderCell: {
-    fontFamily: "Helvetica-Bold",
+  tHeadCell: {
     fontSize: 6.5,
-    color: "#ffffff",
-    letterSpacing: 1,
+    fontFamily: "Helvetica-Bold",
+    color: "#E2E8F0",
+    letterSpacing: 1.2,
   },
-  tableRow: {
+  tRow: {
     flexDirection: "row",
-    paddingVertical: 3,
-    paddingHorizontal: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 9,
     borderBottomWidth: 0.5,
-    borderBottomColor: palette.hairline,
+    borderBottomColor: P.hairline,
     borderBottomStyle: "solid",
   },
-  tableRowAlt: { backgroundColor: palette.bgSoft },
-  tableFooter: {
+  tRowAlt: { backgroundColor: P.bgSoft },
+  tFoot: {
     flexDirection: "row",
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    backgroundColor: palette.goldBg,
+    paddingVertical: 5,
+    paddingHorizontal: 9,
+    backgroundColor: P.goldBg,
     borderTopWidth: 1,
-    borderTopColor: palette.border,
+    borderTopColor: P.goldBorder,
     borderTopStyle: "solid",
   },
   bold: { fontFamily: "Helvetica-Bold" },
+  italic: { fontFamily: "Helvetica-Oblique" },
 
-  /* FOOTER */
+  /* ── SUMMARY BOX ── */
+  summaryBox: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 4,
+  },
+  summaryTile: {
+    flex: 1,
+    borderRadius: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderStyle: "solid",
+  },
+  summaryLabel: {
+    fontSize: 5.5,
+    fontFamily: "Helvetica-Bold",
+    letterSpacing: 1.5,
+    marginBottom: 3,
+  },
+  summaryValue: {
+    fontSize: 11,
+    fontFamily: "Helvetica-Bold",
+    letterSpacing: -0.3,
+  },
+
+  /* ── FOOTER ── */
   footer: {
     position: "absolute",
     bottom: 16,
-    left: 32,
-    right: 32,
+    left: 36,
+    right: 36,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 5,
+    paddingTop: 6,
     borderTopWidth: 0.5,
-    borderTopColor: palette.border,
+    borderTopColor: P.border,
     borderTopStyle: "solid",
   },
-  footerText: { fontSize: 6.5, color: palette.subtle, letterSpacing: 0.4 },
-  footerCenter: { fontSize: 6.5, color: palette.subtle, letterSpacing: 1.6 },
+  footerText: { fontSize: 6.5, color: P.subtle, letterSpacing: 0.4 },
+  footerCenter: { fontSize: 6.5, color: P.subtle, letterSpacing: 2 },
 });
 
 function qar(n: number) {
@@ -236,238 +288,260 @@ interface VillaEntry {
   shareholderAmount: number;
 }
 
+interface SourceEntry {
+  shareId: string;
+  sourceName: string;
+  propertyName: string;
+  sharePercent: number;
+  myShareOwnerPercent: number;
+  profit: number;
+  amount: number;
+}
+
 interface ShareholderReportData {
   shareholder: { id: string; name: string; phone: string | null; email: string | null };
   year: number;
   month: number;
   villaEntries: VillaEntry[];
+  sourceEntries?: SourceEntry[];
   settings: { companyName: string; logoUrl: string | null; address: string | null };
 }
 
-function Header({ data }: { data: ShareholderReportData }) {
+function PageHeader({ data }: { data: ShareholderReportData }) {
   const { settings } = data;
   const initial = settings.companyName.trim().charAt(0).toUpperCase() || "V";
   return (
-    <View style={styles.header} fixed>
-      <View style={styles.brand}>
-        {settings.logoUrl ? (
-          <Image src={settings.logoUrl} style={styles.logo} />
-        ) : (
-          <View style={styles.logoFallback}>
-            <Text style={styles.logoFallbackText}>{initial}</Text>
-          </View>
-        )}
-        <View>
-          <Text style={styles.companyName}>{settings.companyName.toUpperCase()}</Text>
-          {settings.address && <Text style={styles.companyAddress}>{settings.address}</Text>}
+    <>
+      <View style={S.headerBand} fixed>
+        <View style={S.logoTile}>
+          {settings.logoUrl ? (
+            <Image src={settings.logoUrl} style={S.logoImg} />
+          ) : (
+            <Text style={S.logoBoxText}>{initial}</Text>
+          )}
         </View>
+        <View style={S.headerCenter}>
+          <Text style={S.reportType}>SHAREHOLDER STATEMENT</Text>
+          <Text style={S.reportTitle}>{data.shareholder.name}</Text>
+          <Text style={S.reportPeriod}>{MONTHS[data.month - 1]} {data.year}</Text>
+        </View>
+        <View style={S.headerSpacer} />
       </View>
-      <View style={styles.reportMeta}>
-        <Text style={styles.reportKicker}>SHAREHOLDER STATEMENT</Text>
-        <Text style={styles.reportTitle}>{data.shareholder.name}</Text>
-        <Text style={styles.reportPeriod}>{MONTHS[data.month - 1]} {data.year}</Text>
-      </View>
-    </View>
+      <View style={S.goldStripe} fixed />
+    </>
   );
 }
 
-function Footer({ companyName }: { companyName: string }) {
+function PageFooter({ companyName }: { companyName: string }) {
   return (
-    <View style={styles.footer} fixed>
-      <Text style={styles.footerText}>{companyName}</Text>
-      <Text style={styles.footerCenter}>CONFIDENTIAL</Text>
-      <Text
-        style={styles.footerText}
-        render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
-      />
+    <View style={S.footer} fixed>
+      <Text style={S.footerText}>{companyName}</Text>
+      <Text style={S.footerCenter}>CONFIDENTIAL</Text>
+      <Text style={S.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
     </View>
   );
 }
 
 export function ShareholderReportPDF({ data }: { data: ShareholderReportData }) {
   const { shareholder, villaEntries, settings } = data;
-  const totalEarnings = villaEntries.reduce((sum, v) => sum + v.shareholderAmount, 0);
+  const sourceEntries = data.sourceEntries ?? [];
+  const villaEarnings = villaEntries.reduce((sum, v) => sum + v.shareholderAmount, 0);
+  const sourceEarnings = sourceEntries.reduce((sum, s) => sum + s.amount, 0);
+  const totalEarnings = villaEarnings + sourceEarnings;
   const totalCollected = villaEntries.reduce((sum, v) => sum + v.totalCollected, 0);
   const totalExpenses = villaEntries.reduce((sum, v) => sum + v.totalExpenses, 0);
   const totalNet = villaEntries.reduce((sum, v) => sum + v.netProfit, 0);
+  const totalSourceProfit = sourceEntries.reduce((sum, s) => sum + s.profit, 0);
   const monthLabel = `${MONTHS[data.month - 1]} ${data.year}`;
   const initial = shareholder.name.trim().charAt(0).toUpperCase() || "S";
 
   return (
-    <Document
-      title={`${shareholder.name} — ${monthLabel}`}
-      author={settings.companyName}
-    >
-      <Page size="A4" style={styles.page}>
-        <Header data={data} />
-        <View style={styles.divider} />
-        <View style={styles.dividerAccent} />
+    <Document title={`${shareholder.name} — ${monthLabel}`} author={settings.companyName}>
+      <Page size="A4" style={S.page}>
+        <PageHeader data={data} />
 
-        {/* PERSON STRIP */}
-        <View style={styles.personStrip} wrap={false}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initial}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.personName}>{shareholder.name}</Text>
-            <Text style={styles.personContact}>
-              {[shareholder.phone, shareholder.email].filter(Boolean).join("  •  ") ||
-                "No contact information on file"}
-            </Text>
-          </View>
-          <View style={{ alignItems: "flex-end" }}>
-            <Text style={styles.personContact}>STATEMENT PERIOD</Text>
-            <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: palette.ink }}>
-              {monthLabel}
-            </Text>
-          </View>
-        </View>
-
-        {/* HERO TOTAL */}
-        <View style={styles.hero} wrap={false}>
-          <Text style={styles.heroLabel}>TOTAL EARNINGS — {monthLabel.toUpperCase()}</Text>
-          <Text style={styles.heroValue}>{qar(totalEarnings)}</Text>
-          <Text style={styles.heroSub}>
-            Across {villaEntries.length} {villaEntries.length === 1 ? "property" : "properties"}
-          </Text>
-        </View>
-
-        {/* VILLAS TABLE — rows wrap individually to next page */}
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionBar} />
-          <Text style={styles.sectionTitle}>EARNINGS BY PROPERTY</Text>
-          <Text style={styles.sectionCount}>
-            {villaEntries.length} {villaEntries.length === 1 ? "property" : "properties"}
-          </Text>
-        </View>
-        <View style={styles.table}>
-          <View style={styles.tableHeader} fixed>
-            <Text style={[styles.tableHeaderCell, { flex: 1.8 }]}>VILLA</Text>
-            <Text style={[styles.tableHeaderCell, { flex: 0.8, textAlign: "center" }]}>SHARE</Text>
-            <Text style={[styles.tableHeaderCell, { flex: 1.4, textAlign: "right" }]}>COLLECTED</Text>
-            <Text style={[styles.tableHeaderCell, { flex: 1.3, textAlign: "right" }]}>EXPENSES</Text>
-            <Text style={[styles.tableHeaderCell, { flex: 1.3, textAlign: "right" }]}>NET</Text>
-            <Text style={[styles.tableHeaderCell, { flex: 1.5, textAlign: "right" }]}>YOUR SHARE</Text>
-          </View>
-          {villaEntries.length === 0 ? (
-            <View style={styles.tableRow}>
-              <Text style={{ flex: 1, fontSize: 9, color: palette.subtle, fontStyle: "italic" }}>
-                Not assigned to any villas
+        <View style={S.content}>
+          {/* Person strip */}
+          <View style={S.personStrip} wrap={false}>
+            <View style={S.avatar}>
+              <Text style={S.avatarText}>{initial}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={S.personName}>{shareholder.name}</Text>
+              <Text style={S.personContact}>
+                {[shareholder.phone, shareholder.email].filter(Boolean).join("  ·  ") || "No contact on file"}
               </Text>
             </View>
-          ) : (
-            villaEntries.map((v, i) => (
-              <View
-                key={v.villaId}
-                style={[styles.tableRow, i % 2 === 1 ? styles.tableRowAlt : {}]}
-                wrap={false}
-              >
-                <View style={{ flex: 1.8 }}>
-                  <Text style={[{ fontSize: 9 }, styles.bold]}>{v.villaNumber}</Text>
-                  <Text style={{ fontSize: 7.5, color: palette.muted, marginTop: 1 }}>
-                    {v.address}
-                  </Text>
-                </View>
-                <Text
-                  style={{
-                    flex: 0.8,
-                    fontSize: 9,
-                    textAlign: "center",
-                    color: palette.muted,
-                  }}
-                >
-                  {v.percentage}%
+            <View style={{ alignItems: "flex-end" }}>
+              <Text style={{ fontSize: 6, fontFamily: "Helvetica-Bold", color: P.muted, letterSpacing: 1.5 }}>
+                STATEMENT PERIOD
+              </Text>
+              <Text style={{ fontSize: 11, fontFamily: "Helvetica-Bold", color: P.ink, marginTop: 3 }}>
+                {monthLabel}
+              </Text>
+            </View>
+          </View>
+
+          {/* Hero total earnings */}
+          <View style={S.hero} wrap={false}>
+            <View>
+              <Text style={S.heroLabel}>TOTAL EARNINGS — {monthLabel.toUpperCase()}</Text>
+              <Text style={S.heroValue}>{qar(totalEarnings)}</Text>
+              <Text style={S.heroSub}>
+                {villaEntries.length} villa{villaEntries.length === 1 ? "" : "s"}
+                {sourceEntries.length > 0 && ` + ${sourceEntries.length} income source ${sourceEntries.length === 1 ? "share" : "shares"}`}
+              </Text>
+            </View>
+            <View style={{ alignItems: "flex-end" }}>
+              <View style={{ marginBottom: 4 }}>
+                <Text style={{ fontSize: 6, fontFamily: "Helvetica-Bold", color: "#93C5FD", letterSpacing: 1.5 }}>
+                  FROM VILLAS
                 </Text>
-                <Text
-                  style={{
-                    flex: 1.4,
-                    fontSize: 9,
-                    textAlign: "right",
-                    color: palette.green,
-                  }}
-                >
-                  {qar(v.totalCollected)}
-                </Text>
-                <Text
-                  style={{
-                    flex: 1.3,
-                    fontSize: 9,
-                    textAlign: "right",
-                    color: palette.red,
-                  }}
-                >
-                  {qar(v.totalExpenses)}
-                </Text>
-                <Text
-                  style={{
-                    flex: 1.3,
-                    fontSize: 9,
-                    textAlign: "right",
-                    color: v.netProfit >= 0 ? palette.green : palette.red,
-                  }}
-                >
-                  {qar(v.netProfit)}
-                </Text>
-                <Text
-                  style={[
-                    {
-                      flex: 1.5,
-                      fontSize: 9,
-                      textAlign: "right",
-                      color: v.shareholderAmount >= 0 ? palette.blue : palette.red,
-                    },
-                    styles.bold,
-                  ]}
-                >
-                  {qar(v.shareholderAmount)}
+                <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: "#FFFFFF", textAlign: "right" }}>
+                  {qar(villaEarnings)}
                 </Text>
               </View>
-            ))
-          )}
-          <View style={styles.tableFooter} wrap={false}>
-            <Text style={[{ flex: 1.8, fontSize: 9 }, styles.bold]}>TOTAL</Text>
-            <Text style={{ flex: 0.8 }} />
-            <Text
-              style={[
-                { flex: 1.4, fontSize: 9, textAlign: "right", color: palette.green },
-                styles.bold,
-              ]}
-            >
-              {qar(totalCollected)}
-            </Text>
-            <Text
-              style={[
-                { flex: 1.3, fontSize: 9, textAlign: "right", color: palette.red },
-                styles.bold,
-              ]}
-            >
-              {qar(totalExpenses)}
-            </Text>
-            <Text
-              style={[
-                {
-                  flex: 1.3,
-                  fontSize: 9,
-                  textAlign: "right",
-                  color: totalNet >= 0 ? palette.green : palette.red,
-                },
-                styles.bold,
-              ]}
-            >
-              {qar(totalNet)}
-            </Text>
-            <Text
-              style={[
-                { flex: 1.5, fontSize: 9, textAlign: "right", color: palette.blue },
-                styles.bold,
-              ]}
-            >
-              {qar(totalEarnings)}
-            </Text>
+              {sourceEntries.length > 0 && (
+                <View>
+                  <Text style={{ fontSize: 6, fontFamily: "Helvetica-Bold", color: "#93C5FD", letterSpacing: 1.5 }}>
+                    FROM SOURCES
+                  </Text>
+                  <Text style={{ fontSize: 10, fontFamily: "Helvetica-Bold", color: "#FFFFFF", textAlign: "right" }}>
+                    {qar(sourceEarnings)}
+                  </Text>
+                </View>
+              )}
+            </View>
           </View>
+
+          {/* Properties table */}
+          <View style={S.sectionHead}>
+            <View style={S.sectionBar} />
+            <Text style={S.sectionTitle}>EARNINGS BY PROPERTY</Text>
+            <Text style={S.sectionCount}>{villaEntries.length} {villaEntries.length === 1 ? "property" : "properties"}</Text>
+          </View>
+          <View style={S.table}>
+            <View style={S.tHead} fixed>
+              <Text style={[S.tHeadCell, { flex: 2 }]}>PROPERTY</Text>
+              <Text style={[S.tHeadCell, { flex: 0.8, textAlign: "center" }]}>SHARE</Text>
+              <Text style={[S.tHeadCell, { flex: 1.4, textAlign: "right" }]}>COLLECTED</Text>
+              <Text style={[S.tHeadCell, { flex: 1.3, textAlign: "right" }]}>EXPENSES</Text>
+              <Text style={[S.tHeadCell, { flex: 1.3, textAlign: "right" }]}>NET</Text>
+              <Text style={[S.tHeadCell, { flex: 1.5, textAlign: "right" }]}>YOUR CUT</Text>
+            </View>
+            {villaEntries.length === 0 ? (
+              <View style={S.tRow}>
+                <Text style={[{ flex: 1, fontSize: 8 }, S.italic, { color: P.subtle }]}>
+                  Not assigned to any properties
+                </Text>
+              </View>
+            ) : (
+              villaEntries.map((v, i) => (
+                <View key={v.villaId} style={[S.tRow, i % 2 === 1 ? S.tRowAlt : {}]} wrap={false}>
+                  <View style={{ flex: 2 }}>
+                    <Text style={[{ fontSize: 8.5 }, S.bold]}>{v.villaNumber}</Text>
+                    <Text style={{ fontSize: 7, color: P.muted, marginTop: 1 }}>{v.address}</Text>
+                  </View>
+                  <Text style={{ flex: 0.8, fontSize: 8.5, textAlign: "center", color: P.muted }}>
+                    {v.percentage}%
+                  </Text>
+                  <Text style={{ flex: 1.4, fontSize: 8.5, textAlign: "right", color: P.green }}>
+                    {qar(v.totalCollected)}
+                  </Text>
+                  <Text style={{ flex: 1.3, fontSize: 8.5, textAlign: "right", color: P.red }}>
+                    {qar(v.totalExpenses)}
+                  </Text>
+                  <Text style={{ flex: 1.3, fontSize: 8.5, textAlign: "right", color: v.netProfit >= 0 ? P.green : P.red }}>
+                    {qar(v.netProfit)}
+                  </Text>
+                  <Text style={[{ flex: 1.5, fontSize: 8.5, textAlign: "right", color: v.shareholderAmount >= 0 ? P.blueMid : P.red }, S.bold]}>
+                    {qar(v.shareholderAmount)}
+                  </Text>
+                </View>
+              ))
+            )}
+            <View style={S.tFoot} wrap={false}>
+              <Text style={[{ flex: 2, fontSize: 8 }, S.bold]}>TOTAL</Text>
+              <Text style={{ flex: 0.8 }} />
+              <Text style={[{ flex: 1.4, fontSize: 8, textAlign: "right", color: P.green }, S.bold]}>{qar(totalCollected)}</Text>
+              <Text style={[{ flex: 1.3, fontSize: 8, textAlign: "right", color: P.red }, S.bold]}>{qar(totalExpenses)}</Text>
+              <Text style={[{ flex: 1.3, fontSize: 8, textAlign: "right", color: totalNet >= 0 ? P.green : P.red }, S.bold]}>{qar(totalNet)}</Text>
+              <Text style={[{ flex: 1.5, fontSize: 8, textAlign: "right", color: P.blueMid }, S.bold]}>{qar(totalEarnings)}</Text>
+            </View>
+          </View>
+
+          {/* Summary tiles */}
+          {villaEntries.length > 0 && (
+            <View style={S.summaryBox} wrap={false}>
+              <View style={[S.summaryTile, { borderColor: P.greenBorder, backgroundColor: P.greenBg }]}>
+                <Text style={[S.summaryLabel, { color: P.green }]}>TOTAL COLLECTED</Text>
+                <Text style={[S.summaryValue, { color: P.green }]}>{qar(totalCollected)}</Text>
+              </View>
+              <View style={[S.summaryTile, { borderColor: P.border, backgroundColor: P.bgSoft }]}>
+                <Text style={[S.summaryLabel, { color: P.muted }]}>TOTAL EXPENSES</Text>
+                <Text style={[S.summaryValue, { color: P.red }]}>{qar(totalExpenses)}</Text>
+              </View>
+              <View style={[S.summaryTile, { borderColor: totalNet >= 0 ? P.greenBorder : P.redBorder, backgroundColor: totalNet >= 0 ? P.greenBg : P.redBg }]}>
+                <Text style={[S.summaryLabel, { color: totalNet >= 0 ? P.green : P.red }]}>NET PROFIT</Text>
+                <Text style={[S.summaryValue, { color: totalNet >= 0 ? P.green : P.red }]}>{qar(totalNet)}</Text>
+              </View>
+              <View style={[S.summaryTile, { borderColor: P.blueBorder, backgroundColor: P.blueBg }]}>
+                <Text style={[S.summaryLabel, { color: P.blueMid }]}>VILLA EARNINGS</Text>
+                <Text style={[S.summaryValue, { color: P.blueMid }]}>{qar(villaEarnings)}</Text>
+              </View>
+            </View>
+          )}
+
+          {/* Income source shares */}
+          {sourceEntries.length > 0 && (
+            <>
+              <View style={[S.sectionHead, { marginTop: 14 }]}>
+                <View style={S.sectionBar} />
+                <Text style={S.sectionTitle}>EXTERNAL INCOME SHARES</Text>
+                <Text style={S.sectionCount}>
+                  {sourceEntries.length} {sourceEntries.length === 1 ? "property" : "properties"}
+                </Text>
+              </View>
+              <View style={S.table}>
+                <View style={S.tHead} fixed>
+                  <Text style={[S.tHeadCell, { flex: 1.5 }]}>SOURCE</Text>
+                  <Text style={[S.tHeadCell, { flex: 1.8 }]}>PROPERTY</Text>
+                  <Text style={[S.tHeadCell, { flex: 0.8, textAlign: "center" }]}>MY %</Text>
+                  <Text style={[S.tHeadCell, { flex: 1.3, textAlign: "right" }]}>PROFIT</Text>
+                  <Text style={[S.tHeadCell, { flex: 1.4, textAlign: "right" }]}>MY CUT</Text>
+                </View>
+                {sourceEntries.map((s, i) => (
+                  <View key={s.shareId} style={[S.tRow, i % 2 === 1 ? S.tRowAlt : {}]} wrap={false}>
+                    <Text style={[{ flex: 1.5, fontSize: 8.5 }, S.bold]}>{s.sourceName}</Text>
+                    <Text style={{ flex: 1.8, fontSize: 8.5 }}>{s.propertyName}</Text>
+                    <Text style={{ flex: 0.8, fontSize: 8.5, textAlign: "center", color: P.muted }}>
+                      {s.sharePercent.toFixed(2)}%
+                    </Text>
+                    <Text style={{ flex: 1.3, fontSize: 8.5, textAlign: "right", color: s.profit > 0 ? P.ink : P.subtle }}>
+                      {s.profit > 0 ? qar(s.profit) : "—"}
+                    </Text>
+                    <Text style={[{ flex: 1.4, fontSize: 8.5, textAlign: "right", color: P.blueMid }, S.bold]}>
+                      {qar(s.amount)}
+                    </Text>
+                  </View>
+                ))}
+                <View style={S.tFoot} wrap={false}>
+                  <Text style={[{ flex: 1.5, fontSize: 8 }, S.bold]}>TOTAL</Text>
+                  <Text style={{ flex: 1.8 }} />
+                  <Text style={{ flex: 0.8 }} />
+                  <Text style={[{ flex: 1.3, fontSize: 8, textAlign: "right", color: P.ink }, S.bold]}>
+                    {qar(totalSourceProfit)}
+                  </Text>
+                  <Text style={[{ flex: 1.4, fontSize: 8, textAlign: "right", color: P.blueMid }, S.bold]}>
+                    {qar(sourceEarnings)}
+                  </Text>
+                </View>
+              </View>
+            </>
+          )}
         </View>
 
-        <Footer companyName={settings.companyName} />
+        <PageFooter companyName={settings.companyName} />
       </Page>
     </Document>
   );

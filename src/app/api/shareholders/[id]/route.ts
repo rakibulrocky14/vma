@@ -34,6 +34,16 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
           },
         },
       },
+      incomeSourceShares: {
+        include: {
+          entry: {
+            include: {
+              incomeSource: { select: { id: true, name: true } },
+              records: true,
+            },
+          },
+        },
+      },
     },
   });
 

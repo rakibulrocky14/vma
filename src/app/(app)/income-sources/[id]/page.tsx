@@ -19,8 +19,11 @@ import {
   ChevronUp,
   Check,
   X,
+  Download,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface ShareRow {
@@ -30,11 +33,19 @@ interface ShareRow {
   sharePercent: number;
 }
 
+interface RecordRow {
+  id: string;
+  year: number;
+  month: number;
+  profit: number;
+}
+
 interface EntryRow {
   id: string;
   propertyName: string;
   mySharePercent: number;
   shares: ShareRow[];
+  records: RecordRow[];
 }
 
 interface SourceDetail {
@@ -43,6 +54,8 @@ interface SourceDetail {
   phone: string | null;
   notes: string | null;
   entries: EntryRow[];
+  year: number;
+  month: number;
 }
 
 interface ShareholderOption {
@@ -54,6 +67,17 @@ interface ShareholderOption {
 function pct(n: number | string) {
   return Number(n).toFixed(2) + "%";
 }
+
+function qar(n: number) {
+  return "QAR " + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 /* ─── Add Entry Form ─────────────────────────────────────── */
 function AddEntryForm({
@@ -249,12 +273,14 @@ function AddEntryForm({
 /* ─── Entry Card ─────────────────────────────────────────── */
 function EntryCard({
   entry,
-  sourceId,
+  year,
+  month,
   shareholders,
   onMutated,
 }: {
   entry: EntryRow;
-  sourceId: string;
+  year: number;
+  month: number;
   shareholders: ShareholderOption[];
   onMutated: () => void;
 }) {
@@ -269,8 +295,42 @@ function EntryCard({
   const [newSharePct, setNewSharePct] = useState("");
   const [shareLoading, setShareLoading] = useState(false);
 
+  const existingProfit = entry.records[0]?.profit ?? 0;
+  const [profitInput, setProfitInput] = useState(String(Number(existingProfit) || ""));
+  const [profitSaving, setProfitSaving] = useState(false);
+  const [profitSavedTick, setProfitSavedTick] = useState(0);
+
+  // Reset profit input when month changes (entry.records depends on year+month)
+  useEffect(() => {
+    setProfitInput(String(Number(existingProfit) || ""));
+  }, [existingProfit, year, month]);
+
   const totalDistributed = entry.shares.reduce((sum, s) => sum + Number(s.sharePercent), 0);
   const netMyPct = Number(entry.mySharePercent) * (1 - totalDistributed / 100);
+
+  // QAR amounts
+  const profit = parseFloat(profitInput) || 0;
+  const myCut = (profit * Number(entry.mySharePercent)) / 100;
+  const distributedAmount = (myCut * totalDistributed) / 100;
+  const myNetAmount = myCut - distributedAmount;
+
+  async function saveProfit() {
+    const value = parseFloat(profitInput) || 0;
+    setProfitSaving(true);
+    const res = await fetch(`/api/income-sources/entries/${entry.id}/record`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ year, month, profit: value }),
+    });
+    setProfitSaving(false);
+    if (res.ok) {
+      setProfitSavedTick((t) => t + 1);
+      onMutated();
+    } else {
+      const d = await res.json();
+      toast(d.error ?? "Couldn't save profit", "error");
+    }
+  }
 
   async function saveEdit() {
     setEditLoading(true);
@@ -339,6 +399,7 @@ function EntryCard({
             <div className="w-24 shrink-0">
               <input
                 type="number"
+                inputMode="decimal"
                 className="w-full h-9 rounded-lg border border-slate-200 px-3 text-[14px] focus:outline-none focus:ring-2 focus:ring-amber-600/40 focus:border-amber-600"
                 value={editShare}
                 onChange={(e) => setEditShare(e.target.value)}
@@ -412,6 +473,98 @@ function EntryCard({
         )}
       </div>
 
+      {/* Profit + breakdown section (always visible) */}
+      {!editing && (
+        <div className="border-t border-slate-100 px-4 sm:px-5 py-4 bg-emerald-50/30">
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+            <div className="flex-1 min-w-0">
+              <label className="block text-[10.5px] font-bold uppercase tracking-[0.18em] text-emerald-800 mb-1.5">
+                Profit received · {MONTHS[month - 1]} {year}
+              </label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[12px] font-semibold text-slate-500 pointer-events-none">QAR</span>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    className="w-full h-11 sm:h-10 pl-12 pr-3 rounded-lg border border-emerald-300 bg-white text-[15px] font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-600/40 focus:border-emerald-600 tabular-nums"
+                    placeholder="0.00"
+                    value={profitInput}
+                    onChange={(e) => setProfitInput(e.target.value)}
+                    onBlur={() => {
+                      const newVal = parseFloat(profitInput) || 0;
+                      if (newVal !== Number(existingProfit)) saveProfit();
+                    }}
+                    min={0}
+                    step={0.01}
+                  />
+                </div>
+                <Button
+                  size="md"
+                  variant="primary"
+                  onClick={saveProfit}
+                  loading={profitSaving}
+                  disabled={(parseFloat(profitInput) || 0) === Number(existingProfit)}
+                  className="shrink-0"
+                >
+                  <Check className="h-4 w-4" />
+                  <span className="hidden sm:inline">Save</span>
+                </Button>
+              </div>
+              {profitSavedTick > 0 && (parseFloat(profitInput) || 0) === Number(existingProfit) && Number(existingProfit) > 0 && (
+                <p className="text-[11px] text-emerald-700 mt-1.5 flex items-center gap-1">
+                  <Check className="h-3 w-3" /> Saved
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Breakdown — visible when profit > 0 */}
+          {profit > 0 && (
+            <div className="mt-3 pt-3 border-t border-emerald-200/50">
+              <p className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-slate-500 mb-2">
+                Distribution
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div className="rounded-lg bg-white border border-slate-200/80 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wide font-semibold text-slate-500">My total cut ({pct(entry.mySharePercent)})</p>
+                  <p className="text-[14px] font-bold text-emerald-700 tabular-nums mt-0.5">{qar(myCut)}</p>
+                </div>
+                {totalDistributed > 0 && (
+                  <div className="rounded-lg bg-white border border-slate-200/80 px-3 py-2">
+                    <p className="text-[10px] uppercase tracking-wide font-semibold text-slate-500">Given to others ({pct(totalDistributed)})</p>
+                    <p className="text-[14px] font-bold text-amber-700 tabular-nums mt-0.5">{qar(distributedAmount)}</p>
+                  </div>
+                )}
+                <div className="rounded-lg bg-emerald-700 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wide font-semibold text-emerald-200">I keep</p>
+                  <p className="text-[14px] font-bold text-white tabular-nums mt-0.5">{qar(myNetAmount)}</p>
+                </div>
+              </div>
+              {entry.shares.length > 0 && (
+                <div className="mt-2.5 flex flex-col gap-1">
+                  {entry.shares.map((sh) => {
+                    const amount = (myCut * Number(sh.sharePercent)) / 100;
+                    return (
+                      <div key={sh.id} className="flex items-center justify-between gap-2 text-[12.5px]">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="h-5 w-5 shrink-0 flex items-center justify-center rounded-full bg-amber-100 text-amber-800 text-[9px] font-bold">
+                            {sh.shareholder.name.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="truncate text-slate-600">{sh.shareholder.name}</span>
+                          <span className="text-[11px] text-slate-400">{pct(sh.sharePercent)} of my cut</span>
+                        </div>
+                        <span className="shrink-0 font-bold text-amber-700 tabular-nums">{qar(amount)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Shares section */}
       {expanded && (
         <div className="border-t border-slate-100 px-4 sm:px-5 py-3 bg-slate-50/40">
@@ -484,6 +637,7 @@ function EntryCard({
               </select>
               <input
                 type="number"
+                inputMode="decimal"
                 className="h-9 w-24 shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 text-[13px] focus:outline-none focus:ring-2 focus:ring-amber-600/40 focus:border-amber-600"
                 placeholder="% of cut"
                 value={newSharePct}
@@ -519,14 +673,26 @@ export default function IncomeSourceDetailPage() {
   const { toast } = useToast();
   const qc = useQueryClient();
 
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1);
+
+  function shiftMonth(delta: number) {
+    let m = month + delta;
+    let y = year;
+    if (m < 1) { m = 12; y -= 1; }
+    if (m > 12) { m = 1; y += 1; }
+    setMonth(m); setYear(y);
+  }
+
   const [editingInfo, setEditingInfo] = useState(false);
   const [infoForm, setInfoForm] = useState({ name: "", phone: "", notes: "" });
   const [infoLoading, setInfoLoading] = useState(false);
 
   const { data: source, isLoading } = useQuery<SourceDetail>({
-    queryKey: ["income-source", id],
+    queryKey: ["income-source", id, year, month],
     queryFn: async () => {
-      const res = await fetch(`/api/income-sources/${id}`);
+      const res = await fetch(`/api/income-sources/${id}?year=${year}&month=${month}`);
       if (!res.ok) throw new Error("Not found");
       return res.json();
     },
@@ -544,6 +710,7 @@ export default function IncomeSourceDetailPage() {
   function invalidate() {
     qc.invalidateQueries({ queryKey: ["income-source", id] });
     qc.invalidateQueries({ queryKey: ["income-sources"] });
+    qc.invalidateQueries({ queryKey: ["holdings"] });
   }
 
   function startEditInfo() {
@@ -626,14 +793,25 @@ export default function IncomeSourceDetailPage() {
               </div>
             </div>
             {!editingInfo && (
-              <button
-                type="button"
-                onClick={startEditInfo}
-                className="shrink-0 flex items-center gap-1.5 text-[12px] text-slate-500 hover:text-amber-700 font-medium transition-colors cursor-pointer px-2 py-1.5 rounded-lg hover:bg-amber-50"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Edit</span>
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={`/api/pdf/income-source/${id}?year=${year}&month=${month}`}
+                  target="_blank"
+                  className="inline-flex items-center gap-1.5 text-[12px] text-slate-500 hover:text-emerald-700 font-medium transition-colors cursor-pointer px-2 py-1.5 rounded-lg hover:bg-emerald-50"
+                  title="Download PDF"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">PDF</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={startEditInfo}
+                  className="flex items-center gap-1.5 text-[12px] text-slate-500 hover:text-amber-700 font-medium transition-colors cursor-pointer px-2 py-1.5 rounded-lg hover:bg-amber-50"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Edit</span>
+                </button>
+              </div>
             )}
           </div>
 
@@ -680,24 +858,73 @@ export default function IncomeSourceDetailPage() {
           )}
         </div>
 
+        {/* Month picker */}
+        <div className="mb-4 rounded-xl bg-white border border-slate-200/80 shadow-card px-3 sm:px-4 py-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => shiftMonth(-1)}
+              className="flex h-11 w-11 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 transition-colors cursor-pointer"
+              aria-label="Previous month"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <div className="flex-1 min-w-0 overflow-x-auto">
+              <div className="inline-flex h-11 sm:h-9 items-center gap-0.5 rounded-lg border border-slate-200 bg-white p-0.5">
+                {MONTHS_SHORT.map((m, i) => {
+                  const value = i + 1;
+                  const active = value === month;
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setMonth(value)}
+                      className={
+                        "h-full px-3.5 sm:px-2.5 rounded-md text-[13px] sm:text-[12px] font-semibold transition-colors cursor-pointer min-w-[44px] sm:min-w-[40px] " +
+                        (active
+                          ? "bg-slate-900 text-white shadow-sm"
+                          : "text-slate-600 hover:bg-slate-100 active:bg-slate-200")
+                      }
+                    >
+                      {m}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => shiftMonth(1)}
+              className="flex h-11 w-11 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 active:bg-slate-100 transition-colors cursor-pointer"
+              aria-label="Next month"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+          <p className="text-[12px] text-slate-500 mt-2">
+            Showing profits for <span className="font-semibold text-slate-900">{MONTHS[month - 1]} {year}</span>
+          </p>
+        </div>
+
         {/* Properties section */}
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-slate-500" />
-            <h2 className="text-[14px] font-semibold text-slate-900">Properties &amp; Shares</h2>
+            <h2 className="text-[14px] font-semibold text-slate-900">Properties &amp; Profits</h2>
             {totalEntries > 0 && (
               <Badge variant="info">{totalEntries}</Badge>
             )}
           </div>
-          <p className="text-[11.5px] text-slate-400">Click the chevron to manage distributions</p>
+          <p className="text-[11.5px] text-slate-400 hidden sm:block">Enter profit, see your cut</p>
         </div>
 
         <div className="flex flex-col gap-2.5">
           {source.entries.map((entry) => (
             <EntryCard
-              key={entry.id}
+              key={`${entry.id}-${year}-${month}`}
               entry={entry}
-              sourceId={id}
+              year={year}
+              month={month}
               shareholders={shareholders ?? []}
               onMutated={invalidate}
             />

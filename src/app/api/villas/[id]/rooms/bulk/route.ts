@@ -12,6 +12,8 @@ const BulkUpdateSchema = z.object({
         roomId: z.string().min(1),
         rentAmount: z.number().min(0).max(10_000_000),
         paidAmount: z.number().min(0).max(10_000_000),
+        commission: z.number().min(0).max(10_000_000).optional(),
+        status: z.enum(["OCCUPIED", "EMPTY", "SOLD"]).optional(),
       })
     )
     .min(1)
@@ -73,19 +75,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   }
 
   await prisma.$transaction(
-    rooms.map((r) =>
-      prisma.roomMonthlyRecord.upsert({
+    rooms.map((r) => {
+      const status = r.status ?? "OCCUPIED";
+      // Empty / sold rooms carry no rent, payment, or commission
+      const rentAmount = status === "OCCUPIED" ? r.rentAmount : 0;
+      const paidAmount = status === "OCCUPIED" ? r.paidAmount : 0;
+      const commission = status === "OCCUPIED" ? (r.commission ?? 0) : 0;
+      return prisma.roomMonthlyRecord.upsert({
         where: { roomId_year_month: { roomId: r.roomId, year, month } },
-        create: {
-          roomId: r.roomId,
-          year,
-          month,
-          rentAmount: r.rentAmount,
-          paidAmount: r.paidAmount,
-        },
-        update: { rentAmount: r.rentAmount, paidAmount: r.paidAmount },
-      })
-    )
+        create: { roomId: r.roomId, year, month, rentAmount, paidAmount, commission, status },
+        update: { rentAmount, paidAmount, commission, status },
+      });
+    })
   );
 
   return NextResponse.json({ ok: true, count: rooms.length });

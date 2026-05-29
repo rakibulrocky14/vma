@@ -3,14 +3,14 @@ import { formatQAR, parseDecimal } from "@/lib/currency";
 import { TrendingUp, TrendingDown } from "lucide-react";
 
 interface Props {
-  rooms: { rentAmount: unknown; paidAmount: unknown }[];
+  rooms: { rentAmount: unknown; paidAmount: unknown; commission?: unknown; status?: "OCCUPIED" | "EMPTY" | "SOLD" | null; carryIn?: number }[];
   expenses: { amount: unknown }[];
   shareholders: { shareholder: { id: string; name: string }; percentage: unknown }[];
 }
 
 export function ProfitSummary({ rooms, expenses, shareholders }: Props) {
   const summary = computeProfit(
-    rooms.map((r) => ({ rentAmount: r.rentAmount, paidAmount: r.paidAmount })),
+    rooms.map((r) => ({ rentAmount: r.rentAmount, paidAmount: r.paidAmount, commission: r.commission, status: r.status, carryIn: r.carryIn })),
     expenses.map((e) => ({ amount: e.amount })),
     shareholders
       .filter((vs) => vs?.shareholder)
@@ -72,6 +72,9 @@ export function ProfitSummary({ rooms, expenses, shareholders }: Props) {
         </p>
         <div className="space-y-2.5">
           <Row label="Rent expected" value={summary.totalRent} />
+          {summary.totalCommission > 0 && (
+            <Row label="Commission" value={summary.totalCommission} color="text-amber-700" prefix="−" />
+          )}
           <Row label="Collected" value={summary.totalCollected} color="text-emerald-700" />
           <Row
             label="Outstanding"

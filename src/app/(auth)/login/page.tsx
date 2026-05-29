@@ -3,9 +3,9 @@
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Building2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -41,8 +41,15 @@ export default function LoginPage() {
       <div className="hidden lg:flex flex-col flex-1 bg-ink-rich text-white p-12 relative overflow-hidden">
         {/* Brand — pinned top */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-600">
-            <Building2 className="h-5 w-5" />
+          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-white overflow-hidden p-1">
+            <Image
+              src="/logo.png"
+              alt="VMA"
+              width={44}
+              height={44}
+              className="h-full w-full object-contain"
+              priority
+            />
           </div>
           <div>
             <p className="text-[14px] font-semibold tracking-tight">Villa Management</p>
@@ -89,8 +96,15 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Mobile brand */}
           <div className="lg:hidden mb-7 sm:mb-8 text-center">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 shadow-[0_8px_20px_rgba(161,98,7,0.45)]">
-              <Building2 className="h-6 w-6 text-white" strokeWidth={2.5} />
+            <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-2xl bg-white border border-slate-200 shadow-card overflow-hidden p-2">
+              <Image
+                src="/logo.png"
+                alt="VMA"
+                width={80}
+                height={80}
+                className="h-full w-full object-contain"
+                priority
+              />
             </div>
             <p className="text-[16px] font-bold tracking-tight text-slate-900">Villa Management</p>
             <p className="text-[10.5px] uppercase tracking-[0.18em] font-semibold text-amber-700 mt-0.5">

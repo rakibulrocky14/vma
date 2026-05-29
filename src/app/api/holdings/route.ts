@@ -77,6 +77,7 @@ export async function GET(req: Request) {
       entries: {
         include: {
           shares: { include: { shareholder: { select: { id: true, name: true } } } },
+          records: { where: { year, month } },
         },
         orderBy: { createdAt: "asc" },
       },
@@ -95,20 +96,31 @@ export async function GET(req: Request) {
         0
       );
       const netMyPercent = mySharePercent * (1 - totalDistributed / 100);
+      const profit = entry.records[0] ? parseDecimal(entry.records[0].profit) : 0;
+      const myCut = (profit * mySharePercent) / 100;
+      const distributedAmount = (myCut * totalDistributed) / 100;
+      const myNetAmount = myCut - distributedAmount;
       return {
         entryId: entry.id,
         propertyName: entry.propertyName,
         mySharePercent,
-        shares: entry.shares.map((s) => ({
-          shareId: s.id,
-          shareholderId: s.shareholderId,
-          shareholderName: s.shareholder.name,
-          sharePercent: parseDecimal(s.sharePercent),
-          // Their effective % of the total property
-          effectivePercent: (mySharePercent * parseDecimal(s.sharePercent)) / 100,
-        })),
+        shares: entry.shares.map((s) => {
+          const sharePercent = parseDecimal(s.sharePercent);
+          return {
+            shareId: s.id,
+            shareholderId: s.shareholderId,
+            shareholderName: s.shareholder.name,
+            sharePercent,
+            effectivePercent: (mySharePercent * sharePercent) / 100,
+            amount: (myCut * sharePercent) / 100,
+          };
+        }),
         totalDistributed,
         netMyPercent,
+        profit,
+        myCut,
+        distributedAmount,
+        myNetAmount,
       };
     }),
   }));

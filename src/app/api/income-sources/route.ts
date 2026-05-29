@@ -44,6 +44,13 @@ export async function POST(req: Request) {
       notes: parsed.data.notes || null,
       createdById: session.user.id,
     },
+    include: {
+      entries: {
+        include: {
+          shares: { include: { shareholder: { select: { id: true, name: true } } } },
+        },
+      },
+    },
   });
 
   return NextResponse.json(source, { status: 201 });

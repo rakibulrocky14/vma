@@ -9,17 +9,23 @@ const UpdateIncomeSourceSchema = z.object({
   notes: z.string().max(1000).optional().or(z.literal("")),
 });
 
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
+  const { searchParams } = new URL(req.url);
+  const now = new Date();
+  const year = parseInt(searchParams.get("year") ?? String(now.getFullYear()));
+  const month = parseInt(searchParams.get("month") ?? String(now.getMonth() + 1));
+
   const source = await prisma.incomeSource.findFirst({
     where: { id, createdById: session.user.id },
     include: {
       entries: {
         include: {
           shares: { include: { shareholder: { select: { id: true, name: true } } } },
+          records: { where: { year, month } },
         },
         orderBy: { createdAt: "asc" },
       },
@@ -27,7 +33,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   });
 
   if (!source) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(source);
+  return NextResponse.json({ ...source, year, month });
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {

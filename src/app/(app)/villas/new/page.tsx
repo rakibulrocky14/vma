@@ -208,19 +208,22 @@ export default function NewVillaPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="w-full sm:w-32">
-                    <Input
-                      label="Share %"
-                      type="number"
-                      inputMode="decimal"
-                      min={0.01}
-                      max={100}
-                      step={0.01}
-                      placeholder="0"
-                      value={myShare}
-                      onChange={(e) => setMyShare(e.target.value)}
-                      hint="Leave blank if you have no stake"
-                    />
+                  <div className="flex gap-2 sm:gap-3 items-end">
+                    <div className="flex-1 sm:w-32 sm:flex-initial">
+                      <Input
+                        label="Share %"
+                        type="number"
+                        inputMode="decimal"
+                        min={0.01}
+                        max={100}
+                        step={0.01}
+                        placeholder="0"
+                        value={myShare}
+                        onChange={(e) => setMyShare(e.target.value)}
+                      />
+                    </div>
+                    {/* Invisible spacer to match trash button width in other rows */}
+                    <div aria-hidden="true" className="hidden sm:block h-10 w-10 shrink-0" />
                   </div>
                 </div>
               </div>

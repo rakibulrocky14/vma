@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Wallet,
   Users,
+  Download,
 } from "lucide-react";
 
 const MONTHS = [
@@ -57,9 +58,14 @@ interface EntryHolding {
     shareholderName: string;
     sharePercent: number;
     effectivePercent: number;
+    amount: number;
   }[];
   totalDistributed: number;
   netMyPercent: number;
+  profit: number;
+  myCut: number;
+  distributedAmount: number;
+  myNetAmount: number;
 }
 
 interface SourceHolding {
@@ -137,6 +143,10 @@ function VillaCard({ villa }: { villa: VillaHolding }) {
 
 /* ─── Income Source Card ─────────────────────────────────── */
 function SourceCard({ source }: { source: SourceHolding }) {
+  const sourceTotalNet = source.entries.reduce((sum, e) => sum + e.myNetAmount, 0);
+  const sourceTotalProfit = source.entries.reduce((sum, e) => sum + e.profit, 0);
+  const hasAnyProfit = sourceTotalProfit > 0;
+
   return (
     <Link href={`/income-sources/${source.sourceId}`}>
       <div className="group rounded-xl bg-white border border-slate-200/80 shadow-card hover:shadow-card-hover hover:border-slate-300 transition-all overflow-hidden cursor-pointer">
@@ -148,33 +158,39 @@ function SourceCard({ source }: { source: SourceHolding }) {
             <p className="text-[14.5px] font-semibold text-slate-900 truncate">{source.sourceName}</p>
             <p className="text-[11.5px] text-slate-500 mt-0.5">
               {source.entries.length} {source.entries.length === 1 ? "property" : "properties"}
+              {hasAnyProfit && (
+                <> · <span className="font-semibold text-emerald-700">{formatQAR(sourceTotalNet)}</span> earned this month</>
+              )}
             </p>
           </div>
           <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all shrink-0" />
         </div>
 
         {source.entries.length > 0 && (
-          <div className="border-t border-slate-100 px-4 sm:px-5 py-2.5 bg-slate-50/40 flex flex-col gap-1.5">
+          <div className="border-t border-slate-100 px-4 sm:px-5 py-2.5 bg-slate-50/40 flex flex-col gap-2">
             {source.entries.map((entry) => (
               <div key={entry.entryId} className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                   <Building2 className="h-3 w-3 text-slate-400 shrink-0" />
                   <span className="text-[12.5px] text-slate-600 truncate">{entry.propertyName}</span>
+                  <span className="text-[11px] text-slate-400 shrink-0">{pct(entry.mySharePercent)}</span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 text-[12px]">
-                  <span className="text-slate-400">
-                    My share: <span className="font-semibold text-emerald-700">{pct(entry.mySharePercent)}</span>
-                  </span>
-                  {entry.totalDistributed > 0 && (
-                    <span className="text-slate-400">
-                      · I keep: <span className="font-semibold text-slate-700">{entry.netMyPercent.toFixed(2)}%</span>
-                    </span>
-                  )}
-                  {entry.shares.length > 0 && (
-                    <span className="hidden sm:flex items-center gap-1 text-slate-400">
-                      <Users className="h-3 w-3" />
-                      {entry.shares.length}
-                    </span>
+                  {entry.profit > 0 ? (
+                    <>
+                      <span className="text-slate-400">
+                        Profit: <span className="font-semibold text-slate-700 tabular-nums">{formatQAR(entry.profit)}</span>
+                      </span>
+                      <span className="text-slate-300 hidden sm:inline">·</span>
+                      <span className="hidden sm:inline text-slate-400">
+                        I keep: <span className="font-bold text-emerald-700 tabular-nums">{formatQAR(entry.myNetAmount)}</span>
+                      </span>
+                      <span className="sm:hidden font-bold text-emerald-700 tabular-nums">
+                        {formatQAR(entry.myNetAmount)}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="italic text-slate-400">No profit recorded</span>
                   )}
                 </div>
               </div>
@@ -203,6 +219,16 @@ export default function HoldingsPage() {
 
   const totalMyAmount = (data?.villas ?? []).reduce((sum, v) => sum + v.myAmount, 0);
   const hasVillaShares = (data?.villas ?? []).some((v) => v.ownerShare > 0);
+  const totalIncomeSourceEarnings = (data?.incomeSources ?? []).reduce(
+    (sum, s) => sum + s.entries.reduce((esum, e) => esum + e.myNetAmount, 0),
+    0
+  );
+  const totalIncomeSourceProfit = (data?.incomeSources ?? []).reduce(
+    (sum, s) => sum + s.entries.reduce((esum, e) => esum + e.profit, 0),
+    0
+  );
+  const grandTotalEarnings = totalMyAmount + totalIncomeSourceEarnings;
+  const hasAnyIncome = grandTotalEarnings > 0 || totalIncomeSourceProfit > 0 || hasVillaShares;
 
   return (
     <div className="min-h-full bg-[#faf7f1]">
@@ -215,9 +241,20 @@ export default function HoldingsPage() {
               Overview
             </p>
           </div>
-          <h1 className="font-display text-[28px] sm:text-[36px] lg:text-[44px] leading-none font-black tracking-[-0.02em] text-slate-950">
-            My Holdings
-          </h1>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="font-display text-[28px] sm:text-[36px] lg:text-[44px] leading-none font-black tracking-[-0.02em] text-slate-950">
+              My Holdings
+            </h1>
+            <a
+              href={`/api/pdf/holdings?year=${year}&month=${month}`}
+              target="_blank"
+              className="shrink-0 mt-1 inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-[12.5px] font-semibold text-slate-700 shadow-sm hover:border-amber-400 hover:text-amber-700 hover:bg-amber-50 transition-all"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Download PDF</span>
+              <span className="sm:hidden">PDF</span>
+            </a>
+          </div>
           <p className="text-[13px] sm:text-[14px] text-slate-600 mt-2 sm:mt-3">
             {isLoading ? (
               <span className="inline-block h-3.5 w-52 rounded bg-slate-200 animate-pulse align-middle" />
@@ -227,23 +264,37 @@ export default function HoldingsPage() {
           </p>
         </div>
 
-        {/* Summary banner — own villas month total */}
-        {!isLoading && hasVillaShares && (
-          <div className="rounded-xl bg-gradient-to-br from-amber-700 to-amber-900 text-white px-5 sm:px-6 py-4 mb-6 flex items-center gap-4 shadow-md">
+        {/* Grand total banner — villas + income sources combined */}
+        {!isLoading && hasAnyIncome && (
+          <div className="rounded-xl bg-gradient-to-br from-amber-700 to-amber-900 text-white px-5 sm:px-6 py-4 mb-4 flex items-center gap-4 shadow-md">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10">
               <Wallet className="h-5 w-5 text-amber-200" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[11px] uppercase tracking-[0.2em] font-bold text-amber-200">
-                My villa earnings · {MONTHS[month - 1]} {year}
+                Total earnings · {MONTHS[month - 1]} {year}
               </p>
               <p className="text-[22px] sm:text-[26px] font-black tracking-tight mt-0.5 tabular-nums">
-                {formatQAR(totalMyAmount)}
+                {formatQAR(grandTotalEarnings)}
               </p>
             </div>
             <p className="text-[11px] text-amber-200/70 text-right hidden sm:block">
-              Based on collected rent<br />minus expenses
+              Villas + income sources<br />combined
             </p>
+          </div>
+        )}
+
+        {/* Breakdown row — only show if both sources have earnings */}
+        {!isLoading && hasVillaShares && totalIncomeSourceProfit > 0 && (
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="rounded-xl bg-white border border-amber-200/60 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-amber-800 mb-1">From villas</p>
+              <p className="text-[18px] sm:text-[20px] font-black text-slate-900 tabular-nums">{formatQAR(totalMyAmount)}</p>
+            </div>
+            <div className="rounded-xl bg-white border border-emerald-200/60 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.18em] font-bold text-emerald-800 mb-1">From income sources</p>
+              <p className="text-[18px] sm:text-[20px] font-black text-slate-900 tabular-nums">{formatQAR(totalIncomeSourceEarnings)}</p>
+            </div>
           </div>
         )}
 
